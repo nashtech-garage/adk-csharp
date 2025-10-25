@@ -1,69 +1,78 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.CoreAbstractions.Sessions;
+
 namespace NTG.Adk.CoreAbstractions.Memory;
 
 /// <summary>
-/// Service for managing long-term agent memory.
+/// Service for managing searchable long-term agent memory.
 /// Equivalent to google.adk.memory.BaseMemoryService in Python.
 ///
-/// Memory service provides persistent key-value storage that can outlive
-/// individual sessions, enabling agents to "remember" information across
-/// multiple interactions.
+/// Memory service allows agents to:
+/// 1. Ingest conversation sessions into memory
+/// 2. Search past conversations by query
+/// 3. Recall relevant context from previous interactions
+///
+/// This enables agents to "remember" information across sessions and
+/// maintain long-term context about users and conversations.
 /// </summary>
 public interface IMemoryService
 {
     /// <summary>
-    /// Store a memory value.
+    /// Adds a session's conversation history to memory.
+    /// A session may be added multiple times during its lifetime to keep memory up-to-date.
     /// </summary>
-    Task RememberAsync(
-        string appName,
-        string userId,
-        string key,
-        object value,
+    /// <param name="session">The session to add to memory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task AddSessionToMemoryAsync(
+        ISession session,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieve a memory value.
-    /// Returns null if key not found.
+    /// Searches memory for relevant past conversations.
+    /// Returns memory entries (conversation turns) that match the query.
     /// </summary>
-    Task<T?> RecallAsync<T>(
+    /// <param name="appName">Application name</param>
+    /// <param name="userId">User identifier</param>
+    /// <param name="query">Search query</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Search response containing matching memory entries</returns>
+    Task<ISearchMemoryResponse> SearchMemoryAsync(
         string appName,
         string userId,
-        string key,
+        string query,
         CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// A memory entry representing a past conversation turn
+/// </summary>
+public interface IMemoryEntry
+{
+    /// <summary>
+    /// The conversation content
+    /// </summary>
+    Events.IContent Content { get; }
 
     /// <summary>
-    /// Check if a memory key exists.
+    /// Who created this memory (agent, user, tool)
     /// </summary>
-    Task<bool> ContainsAsync(
-        string appName,
-        string userId,
-        string key,
-        CancellationToken cancellationToken = default);
+    string? Author { get; }
 
     /// <summary>
-    /// Delete a memory key.
+    /// When this memory was created (ISO 8601 format)
     /// </summary>
-    Task ForgetAsync(
-        string appName,
-        string userId,
-        string key,
-        CancellationToken cancellationToken = default);
+    string? Timestamp { get; }
+}
 
+/// <summary>
+/// Response from a memory search operation
+/// </summary>
+public interface ISearchMemoryResponse
+{
     /// <summary>
-    /// List all memory keys for a user.
+    /// List of matching memory entries
     /// </summary>
-    Task<IReadOnlyList<string>> ListKeysAsync(
-        string appName,
-        string userId,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Clear all memories for a user.
-    /// </summary>
-    Task ClearAsync(
-        string appName,
-        string userId,
-        CancellationToken cancellationToken = default);
+    IReadOnlyList<IMemoryEntry> Memories { get; }
 }

@@ -100,8 +100,10 @@
 ### Memory
 | Feature | Python ADK | C# ADK | Status | Notes |
 |---------|-----------|--------|--------|-------|
-| IMemoryService | ✅ | ✅ | **Interface Only** | Port exists, no implementations yet |
-| InMemoryMemoryService | ✅ | ✅ | **Complete** | Basic in-memory implementation |
+| IMemoryService | ✅ | ✅ | **Complete** | Semantic search interface for conversation history |
+| InMemoryMemoryService | ✅ | ✅ | **Complete** | Keyword-based conversation search |
+| AddSessionToMemory | ✅ | ✅ | **Complete** | Ingest conversation sessions into searchable memory |
+| SearchMemory | ✅ | ✅ | **Complete** | Query past conversations by keyword matching |
 
 ---
 
@@ -141,10 +143,10 @@
 | **Execution** | 5 features | 5 features | **100%** | ✅ Complete |
 | **Planning** | 3 features | 3 features | **100%** | ✅ Complete |
 | **Retrieval/RAG** | 4 features | 2 features | **50%** | ✅ Core Complete |
-| **Memory** | 2 features | 1 feature | **50%** | ⚠️ Partial |
+| **Memory** | 4 features | 4 features | **100%** | ✅ Complete |
 | **Dev Tools** | 2 features | 0 features | **0%** | ❌ Not Needed |
 
-**Overall Core Parity: 97%** (excludes dev tools and cloud-specific features)
+**Overall Core Parity: 99%** (excludes dev tools and cloud-specific features)
 
 ---
 
@@ -190,4 +192,4 @@
 
 ---
 
-**Conclusion:** The C# ADK has achieved **97% production parity** with Python ADK for core agent workflows, with several exclusive enhancements (DatabaseSessionService, MCP Protocol, advanced OpenAPI, Agentic Retrieval). All critical features are production-ready.
+**Conclusion:** The C# ADK has achieved **99% production parity** with Python ADK for core agent workflows, with several exclusive enhancements (DatabaseSessionService, MCP Protocol, advanced OpenAPI, Agentic Retrieval). All critical features are production-ready.

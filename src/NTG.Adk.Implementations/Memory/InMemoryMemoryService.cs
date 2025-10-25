@@ -2,140 +2,149 @@
 // Licensed under the Apache License, Version 2.0
 
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+using NTG.Adk.CoreAbstractions.Events;
 using NTG.Adk.CoreAbstractions.Memory;
+using NTG.Adk.CoreAbstractions.Sessions;
 
 namespace NTG.Adk.Implementations.Memory;
 
 /// <summary>
-/// In-memory implementation of IMemoryService.
+/// In-memory implementation of searchable conversation memory.
 /// Equivalent to google.adk.memory.InMemoryMemoryService in Python.
+///
+/// Stores conversation sessions and enables keyword-based search
+/// across past conversations.
 ///
 /// Note: Not suitable for production - data is lost when process terminates.
 /// Use for testing and development only.
 /// </summary>
 public class InMemoryMemoryService : IMemoryService
 {
-    // Three-level storage: app -> user -> key -> value
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, object>>> _storage = new();
+    // Storage: appName/userId -> sessionId -> events
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, List<StoredEvent>>> _sessionEvents = new();
 
-    public async Task RememberAsync(
-        string appName,
-        string userId,
-        string key,
-        object value,
+    public Task AddSessionToMemoryAsync(
+        ISession session,
         CancellationToken cancellationToken = default)
     {
-        ValidateInputs(appName, userId, key);
-        ArgumentNullException.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(session);
 
-        var appStorage = _storage.GetOrAdd(appName, _ => new ConcurrentDictionary<string, ConcurrentDictionary<string, object>>());
-        var userStorage = appStorage.GetOrAdd(userId, _ => new ConcurrentDictionary<string, object>());
+        var userKey = $"{session.AppName}/{session.UserId}";
+        var userSessions = _sessionEvents.GetOrAdd(userKey, _ => new ConcurrentDictionary<string, List<StoredEvent>>());
 
-        userStorage[key] = value;
+        // Extract events with content
+        var events = session.Events
+            .Where(e => e.Content?.Parts != null && e.Content.Parts.Any())
+            .Select(e => new StoredEvent
+            {
+                Content = e.Content!,
+                Author = e.Author,
+                Timestamp = DateTime.UtcNow.ToString("o")
+            })
+            .ToList();
 
-        await Task.CompletedTask;
+        userSessions[session.SessionId] = events;
+
+        return Task.CompletedTask;
     }
 
-    public async Task<T?> RecallAsync<T>(
+    public Task<ISearchMemoryResponse> SearchMemoryAsync(
         string appName,
         string userId,
-        string key,
+        string query,
         CancellationToken cancellationToken = default)
-    {
-        ValidateInputs(appName, userId, key);
-
-        if (!_storage.TryGetValue(appName, out var appStorage))
-            return default;
-
-        if (!appStorage.TryGetValue(userId, out var userStorage))
-            return default;
-
-        if (!userStorage.TryGetValue(key, out var value))
-            return default;
-
-        if (value is T typedValue)
-            return await Task.FromResult(typedValue);
-
-        return default;
-    }
-
-    public async Task<bool> ContainsAsync(
-        string appName,
-        string userId,
-        string key,
-        CancellationToken cancellationToken = default)
-    {
-        ValidateInputs(appName, userId, key);
-
-        if (!_storage.TryGetValue(appName, out var appStorage))
-            return false;
-
-        if (!appStorage.TryGetValue(userId, out var userStorage))
-            return false;
-
-        return await Task.FromResult(userStorage.ContainsKey(key));
-    }
-
-    public async Task ForgetAsync(
-        string appName,
-        string userId,
-        string key,
-        CancellationToken cancellationToken = default)
-    {
-        ValidateInputs(appName, userId, key);
-
-        if (!_storage.TryGetValue(appName, out var appStorage))
-            return;
-
-        if (!appStorage.TryGetValue(userId, out var userStorage))
-            return;
-
-        userStorage.TryRemove(key, out _);
-
-        await Task.CompletedTask;
-    }
-
-    public async Task<IReadOnlyList<string>> ListKeysAsync(
-        string appName,
-        string userId,
-        CancellationToken cancellationToken = default)
-    {
-        ValidateInputs(appName, userId, null);
-
-        if (!_storage.TryGetValue(appName, out var appStorage))
-            return Array.Empty<string>();
-
-        if (!appStorage.TryGetValue(userId, out var userStorage))
-            return Array.Empty<string>();
-
-        return await Task.FromResult(userStorage.Keys.ToList());
-    }
-
-    public async Task ClearAsync(
-        string appName,
-        string userId,
-        CancellationToken cancellationToken = default)
-    {
-        ValidateInputs(appName, userId, null);
-
-        if (!_storage.TryGetValue(appName, out var appStorage))
-            return;
-
-        appStorage.TryRemove(userId, out _);
-
-        await Task.CompletedTask;
-    }
-
-    // Validate inputs
-    private static void ValidateInputs(string appName, string userId, string? key)
     {
         if (string.IsNullOrWhiteSpace(appName))
             throw new ArgumentException("App name cannot be empty", nameof(appName));
-
         if (string.IsNullOrWhiteSpace(userId))
             throw new ArgumentException("User ID cannot be empty", nameof(userId));
+        if (string.IsNullOrWhiteSpace(query))
+            throw new ArgumentException("Query cannot be empty", nameof(query));
 
-        if (key != null && string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("Key cannot be empty", nameof(key));
+        var userKey = $"{appName}/{userId}";
+        var memories = new List<IMemoryEntry>();
+
+        if (!_sessionEvents.TryGetValue(userKey, out var userSessions))
+        {
+            return Task.FromResult<ISearchMemoryResponse>(new SearchMemoryResponseAdapter(memories));
+        }
+
+        // Extract search keywords
+        var queryWords = ExtractWords(query.ToLowerInvariant());
+
+        // Search all sessions for matching events
+        foreach (var sessionEvents in userSessions.Values)
+        {
+            foreach (var evt in sessionEvents)
+            {
+                var eventText = ExtractTextFromContent(evt.Content).ToLowerInvariant();
+                var eventWords = ExtractWords(eventText);
+
+                // Match if any query word appears in event
+                if (queryWords.Any(qw => eventWords.Contains(qw)))
+                {
+                    memories.Add(new MemoryEntryAdapter(evt));
+                }
+            }
+        }
+
+        return Task.FromResult<ISearchMemoryResponse>(new SearchMemoryResponseAdapter(memories));
+    }
+
+    private static HashSet<string> ExtractWords(string text)
+    {
+        // Extract words (alphanumeric sequences of 3+ chars)
+        var words = Regex.Matches(text, @"\b\w{3,}\b")
+            .Select(m => m.Value.ToLowerInvariant())
+            .ToHashSet();
+        return words;
+    }
+
+    private static string ExtractTextFromContent(IContent content)
+    {
+        var parts = new List<string>();
+        foreach (var part in content.Parts)
+        {
+            if (part.Text != null)
+            {
+                parts.Add(part.Text);
+            }
+        }
+        return string.Join(" ", parts);
+    }
+
+    // Internal storage for events
+    private sealed class StoredEvent
+    {
+        public required IContent Content { get; init; }
+        public string? Author { get; init; }
+        public string? Timestamp { get; init; }
+    }
+
+    // Adapter from StoredEvent to IMemoryEntry
+    private sealed class MemoryEntryAdapter : IMemoryEntry
+    {
+        private readonly StoredEvent _event;
+
+        public MemoryEntryAdapter(StoredEvent evt)
+        {
+            _event = evt;
+        }
+
+        public IContent Content => _event.Content;
+        public string? Author => _event.Author;
+        public string? Timestamp => _event.Timestamp;
+    }
+
+    // Adapter for search response
+    private sealed class SearchMemoryResponseAdapter : ISearchMemoryResponse
+    {
+        public IReadOnlyList<IMemoryEntry> Memories { get; }
+
+        public SearchMemoryResponseAdapter(List<IMemoryEntry> memories)
+        {
+            Memories = memories;
+        }
     }
 }
