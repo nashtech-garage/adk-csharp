@@ -50,8 +50,12 @@ internal sealed class McpTool : ITool
     {
         try
         {
-            // Convert ADK args to AIFunctionContext format
-            var aiArgs = args.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            // Convert ADK args to AIFunctionArguments
+            var aiArgs = new AIFunctionArguments();
+            foreach (var kvp in args)
+            {
+                aiArgs[kvp.Key] = kvp.Value;
+            }
 
             // Call MCP tool via AIFunction.InvokeAsync
             var result = await _mcpClientTool.InvokeAsync(aiArgs, cancellationToken);

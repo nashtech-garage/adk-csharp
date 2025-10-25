@@ -19,8 +19,16 @@ internal static class McpSchemaConverter
     /// </summary>
     public static FunctionDeclaration ConvertAIFunctionToDeclaration(AIFunction aiFunction, string? nameOverride = null)
     {
-        // Build schema from AIFunction JsonSchema
-        var schema = ConvertJsonNodeToSchema(aiFunction.JsonSchema);
+        // Build schema from AIFunction JsonSchema (JsonElement type)
+        var schema = aiFunction.JsonSchema.ValueKind != JsonValueKind.Undefined &&
+                     aiFunction.JsonSchema.ValueKind != JsonValueKind.Null
+            ? ConvertJsonElementToSchema(aiFunction.JsonSchema)
+            : new Schema
+            {
+                Type = "object",
+                Properties = new Dictionary<string, SchemaProperty>(),
+                Required = null
+            };
 
         return new FunctionDeclaration
         {
@@ -28,27 +36,6 @@ internal static class McpSchemaConverter
             Description = aiFunction.Description,
             Parameters = schema
         };
-    }
-
-    /// <summary>
-    /// Convert JsonNode schema to ADK Schema.
-    /// </summary>
-    private static Schema? ConvertJsonNodeToSchema(JsonNode? jsonNode)
-    {
-        if (jsonNode == null)
-        {
-            return new Schema
-            {
-                Type = "object",
-                Properties = new Dictionary<string, SchemaProperty>(),
-                Required = null
-            };
-        }
-
-        // Parse as JsonElement for easier processing
-        var jsonElement = JsonSerializer.Deserialize<JsonElement>(jsonNode.ToJsonString());
-
-        return ConvertJsonElementToSchema(jsonElement);
     }
 
     /// <summary>

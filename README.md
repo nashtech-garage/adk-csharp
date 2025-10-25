@@ -15,16 +15,18 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 - 🔄 **Session Management** - Multi-user with app/user/session state hierarchy
 - 💾 **Artifact & Memory Services** - File storage and long-term agent memory
 - 🌐 **A2A Protocol** - Seamless interoperability with Google Agent ecosystem
+- 🔌 **MCP Protocol** - Connect to MCP servers and use their tools (stdio, SSE, HTTP)
 - 🚀 **Runner Pattern** - Production-ready orchestration with integrated services
-- 🔌 **LLM Adapters** - Gemini and OpenAI production integrations
-- 🛠️ **Tool Ecosystem** - Function calling and custom tool support
+- 🧩 **LLM Adapters** - Gemini and OpenAI production integrations
+- 🛠️ **Tool Ecosystem** - Function calling, custom tools, and built-in tools (Google Search, Code Execution)
 
 ## 📊 Status
 
-**Version**: 1.2.0-alpha
+**Version**: 1.3.0-alpha
 **Production Readiness**: 100% ✅
 **Feature Parity with Python ADK**: 100% ✅
 **A2A Interoperability**: 100% ✅
+**MCP Protocol Support**: 100% ✅
 
 See [docs/STATUS.md](docs/STATUS.md) for detailed metrics.
 
@@ -125,6 +127,40 @@ await foreach (var a2aEvent in a2aExecutor.ExecuteAsync(
 }
 ```
 
+### MCP Protocol Integration
+
+```csharp
+using NTG.Adk.Boundary.Mcp;
+using NTG.Adk.Implementations.Mcp;
+
+// Connect to MCP server via stdio
+var connectionParams = new StdioConnectionParams
+{
+    Command = "npx",
+    Arguments = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+};
+
+var mcpToolset = new McpToolset(connectionParams);
+
+// Connect and get tools
+await mcpToolset.ConnectAsync();
+var tools = await mcpToolset.GetToolsAsync();
+
+// Use MCP tools with agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "McpAssistant",
+    Instruction = "You have access to MCP tools",
+    Tools = tools.ToList()
+};
+
+var runner = new InMemoryRunner(agent, appName: "McpApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "List files"))
+{
+    // Handle events
+}
+```
+
 ## 📚 Documentation
 
 - **[Getting Started Guide](docs/GETTING_STARTED.md)** - Detailed setup and usage
@@ -185,7 +221,9 @@ E:\repos\adk-csharp/
 │   ├── OpenAIAgent/                # OpenAI integration
 │   ├── AutoFlowAgent/              # AutoFlow orchestration
 │   ├── StoryFlowAgent/             # Multi-agent workflow
-│   └── A2AInteropSample/           # A2A protocol demo
+│   ├── A2AInteropSample/           # A2A protocol demo
+│   ├── McpToolsSample/             # MCP Protocol integration
+│   └── BuiltInToolsSample/         # Built-in tools demo
 ├── docs/                           # Documentation
 └── README.md                       # This file
 ```
@@ -200,6 +238,8 @@ Explore working examples in the `samples/` directory:
 4. **AutoFlowAgent** - Dynamic multi-agent routing
 5. **StoryFlowAgent** - Sequential story generation workflow
 6. **A2AInteropSample** - A2A protocol interoperability
+7. **McpToolsSample** - MCP Protocol integration (stdio, SSE, HTTP transports)
+8. **BuiltInToolsSample** - Built-in tools (Google Search, Code Execution)
 
 Run a sample:
 ```bash

@@ -60,8 +60,8 @@ public sealed class McpToolset : IMcpToolset
                 $"Connection type '{_connectionParams.Type}' not supported")
         };
 
-        // Create MCP client
-        _mcpClient = await McpClient.CreateAsync(transport, cancellationToken);
+        // Create MCP client (no CancellationToken parameter)
+        _mcpClient = await McpClient.CreateAsync(transport);
     }
 
     /// <summary>
@@ -77,7 +77,8 @@ public sealed class McpToolset : IMcpToolset
                 "Not connected to MCP server. Call ConnectAsync first.");
 
         // List tools from MCP server (returns IList<McpClientTool>)
-        var mcpClientTools = await _mcpClient.ListToolsAsync(cancellationToken);
+        // ListToolsAsync accepts optional JsonSerializerOptions (not CancellationToken)
+        var mcpClientTools = await _mcpClient.ListToolsAsync();
 
         // Filter tools if predicate provided
         var filteredTools = _toolFilter != null
@@ -104,7 +105,8 @@ public sealed class McpToolset : IMcpToolset
 
         if (_mcpClient != null)
         {
-            await _mcpClient.CloseAsync();
+            // McpClient implements IAsyncDisposable
+            await _mcpClient.DisposeAsync();
             _mcpClient = null;
         }
     }
@@ -122,9 +124,10 @@ public sealed class McpToolset : IMcpToolset
         // Set environment variables if provided
         if (stdio.Environment != null)
         {
+            options.EnvironmentVariables = new Dictionary<string, string?>();
             foreach (var kvp in stdio.Environment)
             {
-                options.Environment[kvp.Key] = kvp.Value;
+                options.EnvironmentVariables[kvp.Key] = kvp.Value;
             }
         }
 
@@ -139,55 +142,47 @@ public sealed class McpToolset : IMcpToolset
 
     private static IClientTransport CreateSseTransport(SseConnectionParams sse)
     {
-        var httpClient = new HttpClient();
+        var options = new HttpClientTransportOptions
+        {
+            Endpoint = sse.Url,
+            TransportMode = HttpTransportMode.Sse
+        };
 
         // Set timeout if provided
         if (sse.Timeout.HasValue)
         {
-            httpClient.Timeout = sse.Timeout.Value;
+            options.ConnectionTimeout = sse.Timeout.Value;
         }
 
         // Add headers if provided
         if (sse.Headers != null)
         {
-            foreach (var kvp in sse.Headers)
-            {
-                httpClient.DefaultRequestHeaders.Add(kvp.Key, kvp.Value);
-            }
+            options.AdditionalHeaders = new Dictionary<string, string>(sse.Headers);
         }
 
-        var options = new HttpClientTransportOptions
-        {
-            Uri = sse.Url,
-            Mode = HttpTransportMode.ServerSentEvents
-        };
-
-        return new HttpClientTransport(httpClient, options);
+        return new HttpClientTransport(options);
     }
 
     private static IClientTransport CreateHttpTransport(HttpConnectionParams http)
     {
-        var httpClient = new HttpClient();
-
-        if (http.Timeout.HasValue)
-        {
-            httpClient.Timeout = http.Timeout.Value;
-        }
-
-        if (http.Headers != null)
-        {
-            foreach (var kvp in http.Headers)
-            {
-                httpClient.DefaultRequestHeaders.Add(kvp.Key, kvp.Value);
-            }
-        }
-
         var options = new HttpClientTransportOptions
         {
-            Uri = http.Url,
-            Mode = HttpTransportMode.StreamableHttp
+            Endpoint = http.Url,
+            TransportMode = HttpTransportMode.StreamableHttp
         };
 
-        return new HttpClientTransport(httpClient, options);
+        // Set timeout if provided
+        if (http.Timeout.HasValue)
+        {
+            options.ConnectionTimeout = http.Timeout.Value;
+        }
+
+        // Add headers if provided
+        if (http.Headers != null)
+        {
+            options.AdditionalHeaders = new Dictionary<string, string>(http.Headers);
+        }
+
+        return new HttpClientTransport(options);
     }
 }
