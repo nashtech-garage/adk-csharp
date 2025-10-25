@@ -10,6 +10,8 @@
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.53.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.11" />
+    <PackageReference Include="Npgsql" Version="8.0.5" />
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.10.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />
     <PackageReference Include="Microsoft.OpenApi" Version="1.6.22" />
