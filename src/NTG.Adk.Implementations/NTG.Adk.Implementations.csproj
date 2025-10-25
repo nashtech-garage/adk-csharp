@@ -8,7 +8,10 @@
   <ItemGroup>
     <PackageReference Include="A2A" Version="0.3.3-preview" />
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.53.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.10.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />
+    <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.3" />
+    <PackageReference Include="ModelContextProtocol.Core" Version="0.4.0-preview.3" />
     <PackageReference Include="OpenAI" Version="2.5.0" />
   </ItemGroup>
 
