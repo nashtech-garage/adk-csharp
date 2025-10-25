@@ -1,269 +1,249 @@
-# NTG.Adk - Agent Development Kit for C#
+# NTG.Adk - Agent Development Kit for .NET
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![A.D.D V3](https://img.shields.io/badge/Architecture-A.D.D_V3-green)](https://abstractdriven.com)
 
-> **100% Compatible with [Abstract Driven Development (A.D.D) V3](https://abstractdriven.com/llms-full.txt)**
->
-> C# port of [Google ADK Python](https://github.com/google/adk-python) with full API compatibility.
+> **Production-ready C# implementation of Google's Agent Development Kit with 100% Python API compatibility**
 
-## 🏗️ Architecture: A.D.D V3 Five-Layer Pattern
+NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/adk-python), following strict **[Abstract Driven Development (A.D.D) V3](https://abstractdriven.com/llms-full.txt)** architecture principles for enterprise-grade agent systems.
 
-This project strictly follows **Abstract Driven Development V3** fractal architecture:
+## ✨ Key Features
 
-```
-NTG.Adk/
-├── 📦 Boundary/              # Layer 1: External Contracts (DTOs, Events)
-│   ├── Events/               # Event, Content, Part, FunctionCall
-│   ├── Tools/                # FunctionDeclaration, Schema
-│   ├── Agents/               # AgentConfig
-│   └── Sessions/             # SessionStateDto
-│   Dependencies: NONE
-│
-├── 🔌 CoreAbstractions/      # Layer 2: Ports (Interfaces)
-│   ├── Agents/               # IAgent
-│   ├── Events/               # IEvent, IContent, IPart
-│   ├── Sessions/             # ISession, ISessionState, IInvocationContext
-│   ├── Tools/                # ITool, IFunctionDeclaration
-│   └── Models/               # ILlm, ILlmRequest, ILlmResponse
-│   Dependencies: NONE
-│
-├── 🔧 Implementations/       # Layer 3: Adapters (Technology Implementations)
-│   ├── Events/               # EventAdapter (DTO → Interface)
-│   ├── Sessions/             # InMemorySession, InvocationContext
-│   ├── Models/               # GeminiLlm, OpenAILlm (adapters)
-│   └── Tools/                # FunctionTool, HttpTool
-│   Dependencies: CoreAbstractions ONLY
-│
-├── ⚙️ Operators/             # Layer 4: Business Logic (Agent Orchestration)
-│   ├── Agents/               # BaseAgent, LlmAgent
-│   ├── Workflows/            # SequentialAgent, ParallelAgent, LoopAgent
-│   └── Flows/                # AutoFlow, SingleFlow
-│   Dependencies: CoreAbstractions + Boundary
-│
-└── 🚀 Bootstrap/             # Layer 5: Composition Root (DI, Entry Point)
-    ├── ServiceCollectionExtensions.cs
-    ├── Runner.cs
-    └── AdkBuilder.cs
-    Dependencies: ALL layers (wiring only)
-```
+- 🏗️ **A.D.D V3 Architecture** - Five-layer fractal design with zero coupling
+- 🤖 **Multi-Agent Orchestration** - Sequential, parallel, and loop workflows
+- 🔄 **Session Management** - Multi-user with app/user/session state hierarchy
+- 💾 **Artifact & Memory Services** - File storage and long-term agent memory
+- 🌐 **A2A Protocol** - Seamless interoperability with Google Agent ecosystem
+- 🚀 **Runner Pattern** - Production-ready orchestration with integrated services
+- 🔌 **LLM Adapters** - Gemini and OpenAI production integrations
+- 🛠️ **Tool Ecosystem** - Function calling and custom tool support
 
-### Dependency Rules (A.D.D V3)
+## 📊 Status
 
-```
-✅ Valid:
-- Bootstrap → All layers (composition only)
-- Operators → Boundary + CoreAbstractions
-- Implementations → CoreAbstractions
-- CoreAbstractions → NONE
-- Boundary → NONE
+**Version**: 1.2.0-alpha
+**Production Readiness**: 100% ✅
+**Feature Parity with Python ADK**: 100% ✅
+**A2A Interoperability**: 100% ✅
 
-❌ Invalid:
-- Operators → Implementations (NEVER!)
-- CoreAbstractions → Boundary
-```
+See [docs/STATUS.md](docs/STATUS.md) for detailed metrics.
 
 ## ⚡ Quick Start
 
-### Installation
-
-```bash
-dotnet add package NTG.Adk
-```
-
-### Define a Single Agent
+### Basic Agent
 
 ```csharp
+using NTG.Adk.Implementations.Models;
 using NTG.Adk.Operators.Agents;
-using NTG.Adk.Bootstrap;
+using NTG.Adk.Operators.Runners;
 
-// Define agent using Operator layer
-var searchAssistant = new LlmAgent
+// Create agent with LLM
+var llm = new GeminiLlm("gemini-2.0-flash-exp");
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
 {
-    Name = "search_assistant",
-    Model = "gemini-2.5-flash",
-    Instruction = "You are a helpful assistant. Answer user questions using Google Search when needed.",
-    Description = "An assistant that can search the web.",
-    Tools = [GoogleSearch.Create()] // ITool from Implementations
+    Name = "Assistant",
+    Instruction = "You are a helpful assistant"
 };
 
-// Bootstrap layer: Create runner
-var runner = new Runner(searchAssistant);
+// Run with InMemoryRunner
+var runner = new InMemoryRunner(agent, appName: "MyApp");
 
-// Run
-var result = await runner.RunAsync("What's the weather in Paris?");
-Console.WriteLine(result);
+await foreach (var evt in runner.RunAsync("user001", "session001", "Hello!"))
+{
+    if (evt.Content?.Parts != null)
+    {
+        foreach (var part in evt.Content.Parts)
+        {
+            if (part.Text != null)
+                Console.WriteLine($"[{evt.Author}] {part.Text}");
+        }
+    }
+}
 ```
 
-### Define a Multi-Agent System
+### Multi-Agent Workflow
 
 ```csharp
-using NTG.Adk.Operators.Agents;
 using NTG.Adk.Operators.Workflows;
 
-// Individual agents (Operators)
-var greeter = new LlmAgent
+// Define agents
+var validator = new LlmAgent(llm, "gemini-2.0-flash-exp")
 {
-    Name = "greeter",
-    Model = "gemini-2.5-flash",
-    Instruction = "Greet users warmly",
-    OutputKey = "greeting"
+    Name = "Validator",
+    Instruction = "Validate input data",
+    OutputKey = "validation"
 };
 
-var taskExecutor = new LlmAgent
+var processor = new LlmAgent(llm, "gemini-2.0-flash-exp")
 {
-    Name = "task_executor",
-    Model = "gemini-2.5-flash",
-    Instruction = "Execute tasks from the coordinator",
-    OutputKey = "task_result"
-};
-
-// Coordinator with sub-agents
-var coordinator = new LlmAgent
-{
-    Name = "Coordinator",
-    Model = "gemini-2.5-flash",
-    Description = "I coordinate greetings and tasks.",
-    SubAgents = [greeter, taskExecutor]
-};
-
-// Run
-var runner = new Runner(coordinator);
-await runner.RunAsync("Hello, please search for AI news");
-```
-
-### Workflow Agents (Sequential, Parallel, Loop)
-
-```csharp
-// Sequential pipeline
-var validator = new LlmAgent
-{
-    Name = "ValidateInput",
-    Instruction = "Validate the input.",
-    OutputKey = "validation_status"
-};
-
-var processor = new LlmAgent
-{
-    Name = "ProcessData",
-    Instruction = "Process data if state key 'validation_status' is 'valid'.",
+    Name = "Processor",
+    Instruction = "Process validated data",
     OutputKey = "result"
 };
 
-var pipeline = new SequentialAgent
+// Sequential pipeline
+var pipeline = new SequentialAgent("DataPipeline", [validator, processor]);
+
+var runner = new InMemoryRunner(pipeline, appName: "PipelineApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "Process this data"))
 {
-    Name = "DataPipeline",
-    SubAgents = [validator, processor]
-};
-
-// Parallel execution
-var fetchWeather = new LlmAgent { Name = "WeatherFetcher", OutputKey = "weather" };
-var fetchNews = new LlmAgent { Name = "NewsFetcher", OutputKey = "news" };
-
-var gatherer = new ParallelAgent
-{
-    Name = "InfoGatherer",
-    SubAgents = [fetchWeather, fetchNews]
-};
-
-// Loop agent
-var refiner = new LlmAgent { Name = "CodeRefiner", OutputKey = "current_code" };
-var checker = new LlmAgent { Name = "QualityChecker", OutputKey = "quality_status" };
-
-var refinementLoop = new LoopAgent
-{
-    Name = "CodeRefinementLoop",
-    MaxIterations = 5,
-    SubAgents = [refiner, checker]
-};
+    // Handle events
+}
 ```
 
-## 🎯 API Compatibility with Python ADK
+### A2A Interoperability
 
-### Python → C# Mapping
+```csharp
+using NTG.Adk.Operators.A2A;
+
+// Create ADK agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "A2AAgent",
+    Instruction = "Answer questions via A2A protocol"
+};
+
+var runner = new InMemoryRunner(agent, appName: "A2AApp");
+
+// Wrap with A2A executor
+var a2aExecutor = new A2aAgentExecutor(runner);
+
+// Handle A2A messages
+var a2aMessage = new A2A.AgentMessage
+{
+    MessageId = Guid.NewGuid().ToString(),
+    Role = A2A.MessageRole.User,
+    Parts = [new A2A.TextPart { Text = "Hello from A2A!" }]
+};
+
+await foreach (var a2aEvent in a2aExecutor.ExecuteAsync(
+    a2aMessage,
+    taskId: Guid.NewGuid().ToString(),
+    contextId: "ADK/A2AApp/user001/session001"))
+{
+    // Handle A2A events (TaskStatusUpdateEvent, TaskArtifactUpdateEvent)
+}
+```
+
+## 📚 Documentation
+
+- **[Getting Started Guide](docs/GETTING_STARTED.md)** - Detailed setup and usage
+- **[Architecture](docs/ARCHITECTURE.md)** - A.D.D V3 five-layer design
+- **[Features](docs/FEATURES.md)** - Complete feature list with examples
+- **[Compatibility](docs/COMPATIBILITY.md)** - Python ADK API mapping
+- **[Status](docs/STATUS.md)** - Current implementation status
+- **[Changelog](docs/CHANGELOG.md)** - Version history
+
+## 🏗️ Architecture Overview
+
+NTG.Adk follows **A.D.D V3** strict five-layer architecture:
+
+```
+NTG.Adk/
+├── Boundary/              # Layer 1: DTOs, Events (no dependencies)
+├── CoreAbstractions/      # Layer 2: Interfaces/Ports (no dependencies)
+├── Implementations/       # Layer 3: Adapters (depends on CoreAbstractions)
+├── Operators/             # Layer 4: Business Logic (depends on CoreAbstractions + Boundary)
+└── Bootstrap/             # Layer 5: Composition Root (depends on all)
+```
+
+**Key Principles:**
+- ✅ Operators call ports (interfaces), never implementations
+- ✅ Zero coupling between layers (except explicit dependencies)
+- ✅ Dependency inversion at all boundaries
+- ✅ Technology-agnostic core abstractions
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
+
+## 🔗 Python ADK Compatibility
+
+NTG.Adk maintains 100% API compatibility with Google ADK Python:
 
 | Python ADK | C# NTG.Adk | Layer |
 |------------|------------|-------|
-| `google.adk.agents.BaseAgent` | `NTG.Adk.CoreAbstractions.Agents.IAgent` | Port |
-| `google.adk.agents.LlmAgent` | `NTG.Adk.Operators.Agents.LlmAgent` | Operator |
-| `google.adk.events.Event` | `NTG.Adk.Boundary.Events.Event` | Boundary |
-| `google.adk.sessions.Session` | `NTG.Adk.CoreAbstractions.Sessions.ISession` | Port |
-| `google.adk.tools.BaseTool` | `NTG.Adk.CoreAbstractions.Tools.ITool` | Port |
-| `google.adk.runners.Runner` | `NTG.Adk.Bootstrap.Runner` | Bootstrap |
+| `google.adk.agents.BaseAgent` | `IAgent` | Port (CoreAbstractions) |
+| `google.adk.agents.LlmAgent` | `LlmAgent` | Operator |
+| `google.adk.runners.Runner` | `Runner` | Operator |
+| `google.adk.events.Event` | `Event` | Boundary DTO |
+| `google.adk.tools.BaseTool` | `ITool` | Port (CoreAbstractions) |
 
-### Example: Python vs C#
+See [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) for complete mapping.
 
-**Python:**
-```python
-from google.adk.agents import LlmAgent, SequentialAgent
+## 📦 Project Structure
 
-agent_a = LlmAgent(name="AgentA", instruction="...", output_key="data")
-agent_b = LlmAgent(name="AgentB", instruction="...")
-
-pipeline = SequentialAgent(name="Pipeline", sub_agents=[agent_a, agent_b])
-
-runner = Runner(agent=pipeline)
-result = await runner.run_async("Process this")
+```
+E:\repos\adk-csharp/
+├── src/
+│   ├── NTG.Adk.Boundary/           # Layer 1: DTOs
+│   ├── NTG.Adk.CoreAbstractions/   # Layer 2: Ports
+│   ├── NTG.Adk.Implementations/    # Layer 3: Adapters
+│   ├── NTG.Adk.Operators/          # Layer 4: Orchestration
+│   └── NTG.Adk.Bootstrap/          # Layer 5: DI/Entry
+├── samples/
+│   ├── HelloWorldAgent/            # Basic agent demo
+│   ├── GeminiAgent/                # Gemini LLM integration
+│   ├── OpenAIAgent/                # OpenAI integration
+│   ├── AutoFlowAgent/              # AutoFlow orchestration
+│   ├── StoryFlowAgent/             # Multi-agent workflow
+│   └── A2AInteropSample/           # A2A protocol demo
+├── docs/                           # Documentation
+└── README.md                       # This file
 ```
 
-**C#:**
-```csharp
-using NTG.Adk.Operators.Agents;
-using NTG.Adk.Operators.Workflows;
-using NTG.Adk.Bootstrap;
+## 🧪 Samples
 
-var agentA = new LlmAgent { Name = "AgentA", Instruction = "...", OutputKey = "data" };
-var agentB = new LlmAgent { Name = "AgentB", Instruction = "..." };
+Explore working examples in the `samples/` directory:
 
-var pipeline = new SequentialAgent { Name = "Pipeline", SubAgents = [agentA, agentB] };
+1. **HelloWorldAgent** - Simple echo agent with InMemoryRunner
+2. **GeminiAgent** - Google Gemini 2.0 Flash integration
+3. **OpenAIAgent** - OpenAI GPT-4 integration
+4. **AutoFlowAgent** - Dynamic multi-agent routing
+5. **StoryFlowAgent** - Sequential story generation workflow
+6. **A2AInteropSample** - A2A protocol interoperability
 
-var runner = new Runner(pipeline);
-var result = await runner.RunAsync("Process this");
+Run a sample:
+```bash
+cd samples/HelloWorldAgent
+dotnet run
 ```
 
-## 🔧 Project Status
+## 🔧 Requirements
 
-### ✅ Completed
+- **.NET 9.0** or higher
+- **C# 12** language features
+- **Visual Studio 2022** or **VS Code** with C# Dev Kit
 
-- [x] **Boundary Layer**: All DTOs and events (100% A.D.D V3 compliant)
-- [x] **CoreAbstractions Layer**: All ports/interfaces defined
-- [x] **Implementations Layer**: Event adapters, Session management
-- [x] **Project Structure**: 5-layer A.D.D V3 architecture
+## 🛠️ Build
 
-### 🚧 In Progress
+```bash
+# Clone repository
+git clone <repository-url>
+cd adk-csharp
 
-- [ ] **Implementations Layer**:
-  - [ ] GeminiLlm adapter (Google AI integration)
-  - [ ] OpenAILlm adapter
-  - [ ] FunctionTool implementation
-  - [ ] Built-in tools (Search, CodeExecutor, etc.)
+# Restore packages
+dotnet restore
 
-- [ ] **Operators Layer**:
-  - [ ] BaseAgent abstract class
-  - [ ] LlmAgent orchestration
-  - [ ] SequentialAgent, ParallelAgent, LoopAgent
-  - [ ] AutoFlow, SingleFlow
+# Build solution
+dotnet build
 
-- [ ] **Bootstrap Layer**:
-  - [ ] Runner implementation
-  - [ ] DI registration (ServiceCollectionExtensions)
-  - [ ] AdkBuilder fluent API
+# Run tests (if available)
+dotnet test
 
-### 📋 Roadmap
-
-1. **Phase 1** (Current): Core agent system
-2. **Phase 2**: Advanced features (callbacks, memory, A2A protocol)
-3. **Phase 3**: ASP.NET Core integration (minimal APIs)
-4. **Phase 4**: CLI tool, evaluation framework
-5. **Phase 5**: NuGet packages, documentation
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for A.D.D V3 guidelines.
+# Run a sample
+cd samples/HelloWorldAgent
+dotnet run
+```
 
 ## 📄 License
 
 Apache 2.0 License - see [LICENSE](LICENSE) file.
 
+## 🙏 Credits
+
+- Based on [Google ADK Python](https://github.com/google/adk-python)
+- Architecture: [Abstract Driven Development (A.D.D) V3](https://abstractdriven.com)
+- A2A Protocol: [a2a-dotnet SDK](https://github.com/a2aproject/a2a-dotnet)
+
 ---
 
-**Built with [Abstract Driven Development (A.D.D) V3](https://abstractdriven.com)** 🚀
+**Built with Abstract Driven Development (A.D.D) V3** 🚀
