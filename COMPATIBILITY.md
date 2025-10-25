@@ -87,7 +87,7 @@
 |---------|-----------|--------|--------|-------|
 | BasePlanner | ✅ | ✅ | **Complete** | `IPlanner` interface in CoreAbstractions |
 | BuiltInPlanner | ✅ | ✅ | **Complete** | Native model thinking capabilities |
-| PlanReActPlanner | ✅ | ❌ | **Not Planned** | Python-specific pattern |
+| PlanReActPlanner | ✅ | ✅ | **Complete** | Structured reasoning with tags |
 
 ### Retrieval & RAG
 | Feature | Python ADK | C# ADK | Status | Notes |
@@ -139,12 +139,12 @@
 | **Agent Types** | 9 features | 9 features | **100%** | ✅ Complete |
 | **Tools** | 6 features | 7+ features | **117%** | ✅ Enhanced |
 | **Execution** | 5 features | 5 features | **100%** | ✅ Complete |
-| **Planning** | 3 features | 2 features | **67%** | ✅ Core Complete |
+| **Planning** | 3 features | 3 features | **100%** | ✅ Complete |
 | **Retrieval/RAG** | 4 features | 2 features | **50%** | ✅ Core Complete |
 | **Memory** | 2 features | 1 feature | **50%** | ⚠️ Partial |
 | **Dev Tools** | 2 features | 0 features | **0%** | ❌ Not Needed |
 
-**Overall Core Parity: 95%** (excludes dev tools and cloud-specific features)
+**Overall Core Parity: 97%** (excludes dev tools and cloud-specific features)
 
 ---
 
@@ -190,4 +190,4 @@
 
 ---
 
-**Conclusion:** The C# ADK has achieved **95% production parity** with Python ADK for core agent workflows, with several exclusive enhancements (DatabaseSessionService, MCP Protocol, advanced OpenAPI). All critical features are production-ready.
+**Conclusion:** The C# ADK has achieved **97% production parity** with Python ADK for core agent workflows, with several exclusive enhancements (DatabaseSessionService, MCP Protocol, advanced OpenAPI, Agentic Retrieval). All critical features are production-ready.
