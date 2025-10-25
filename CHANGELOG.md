@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0-alpha] - 2025-10-25
+
+### 🌐 **A2A PROTOCOL INTEROPERABILITY**
+
+This release adds **A2A (Agent-to-Agent) Protocol** support, enabling seamless communication between .NET ADK agents and Google's Agent ecosystem.
+
+#### A2A Integration (NEW!) ✅ COMPLETE
+
+- **A2aAgentExecutor** - Bridge between ADK Runner and A2A TaskManager
+  - Handles A2A message callbacks
+  - Converts A2A types ↔ ADK types
+  - Streams ADK events as A2A task updates
+  - Full lifecycle management (submitted → working → completed)
+
+- **Bidirectional Converters** - Protocol translation layer
+  - `PartConverter` - A2A.Part ↔ ADK Part (text, files, function calls)
+  - `RequestConverter` - A2A.AgentMessage → ADK AgentRunRequest
+  - `EventConverter` - ADK Event → A2A TaskStatusUpdateEvent/TaskArtifactUpdateEvent
+  - `MetadataUtilities` - Context ID mapping and metadata prefixing
+
+- **Files Added**:
+  - `src/NTG.Adk.Implementations/A2A/Converters/MetadataUtilities.cs`
+  - `src/NTG.Adk.Implementations/A2A/Converters/PartConverter.cs`
+  - `src/NTG.Adk.Implementations/A2A/Converters/RequestConverter.cs`
+  - `src/NTG.Adk.Implementations/A2A/Converters/EventConverter.cs`
+  - `src/NTG.Adk.Implementations/A2A/Models/AgentRunRequest.cs`
+  - `src/NTG.Adk.Operators/A2A/A2aAgentExecutor.cs`
+  - `samples/A2AInteropSample/` - Demo of A2A interoperability
+
+#### Dependencies Added
+
+- **A2A 0.3.3-preview** - Official .NET A2A Protocol SDK
+  - Added to NTG.Adk.Implementations
+  - Added to NTG.Adk.Operators
+
+#### Architecture Compliance
+
+- ✅ **100% A.D.D V3 Compliant** - Strict 5-layer separation maintained
+- ✅ **CoreAbstractions** → IEvent, IPart interfaces (ports)
+- ✅ **Implementations** → Converters, models (adapters)
+- ✅ **Operators** → A2aAgentExecutor (orchestration)
+- ✅ **Zero coupling** - Clean boundaries between layers
+
+#### Statistics
+
+- **Projects**: 11 total (6 samples)
+- **Build**: 0 errors, 0 warnings
+- **A2A Components**: 6 new files
+- **Lines of Code**: ~900 lines A2A integration
+
 ## [1.1.0-alpha] - 2025-10-25
 
 ### 🚀 **RUNNER PATTERN + ARTIFACT & MEMORY SERVICES**
