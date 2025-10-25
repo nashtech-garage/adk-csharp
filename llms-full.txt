@@ -1,0 +1,1423 @@
+# NTG.Adk - C# Agent Development Kit
+# Complete API Reference for Language Models
+
+================================================================================
+OVERVIEW
+================================================================================
+
+NTG.Adk is a production-ready C# implementation of Google's Agent Development Kit
+with 99% feature parity with Python ADK. Built using A.D.D V3 (Abstract Driven
+Development) architecture with strict five-layer separation.
+
+Version: 1.4.0-alpha
+Target: .NET 8.0 LTS (supported until Nov 2026)
+License: Apache 2.0
+Repository: https://github.com/ntg/adk-csharp
+
+================================================================================
+INSTALLATION
+================================================================================
+
+Install the main package:
+
+```bash
+dotnet add package NTG.Adk
+```
+
+This single package includes all layers:
+- NTG.Adk.Boundary (DTOs and data contracts)
+- NTG.Adk.CoreAbstractions (interfaces and ports)
+- NTG.Adk.Implementations (concrete implementations)
+- NTG.Adk.Operators (orchestration and workflows)
+- NTG.Adk.Bootstrap (composition root)
+
+================================================================================
+ARCHITECTURE - A.D.D V3 FIVE LAYERS
+================================================================================
+
+NTG.Adk follows strict Abstract Driven Development (A.D.D) V3 architecture:
+
+Layer 1: Boundary
+- DTOs, Events, Data Contracts
+- No dependencies on other layers
+- Namespace: NTG.Adk.Boundary
+
+Layer 2: CoreAbstractions
+- Interfaces (IAgent, ILlm, ITool, ISession, etc.)
+- Domain abstractions (ports in hexagonal architecture)
+- No dependencies on implementations
+- Namespace: NTG.Adk.CoreAbstractions
+
+Layer 3: Implementations
+- Concrete implementations (GeminiLlm, OpenAILlm, tools)
+- Adapters for external services
+- Depends on CoreAbstractions only
+- Namespace: NTG.Adk.Implementations
+
+Layer 4: Operators
+- Business logic and orchestration
+- Workflow agents (Sequential, Parallel, Loop)
+- Runner pattern
+- Depends on CoreAbstractions + Boundary
+- Namespace: NTG.Adk.Operators
+
+Layer 5: Bootstrap
+- Dependency injection and composition
+- Entry point for applications
+- Depends on all layers
+- Namespace: NTG.Adk.Bootstrap
+
+Key Rules:
+- Operators call ports (interfaces), NEVER implementations
+- Each layer only depends on lower layers
+- Zero coupling between peer layers
+- Technology-agnostic core abstractions
+
+================================================================================
+QUICK START - BASIC AGENT
+================================================================================
+
+```csharp
+using NTG.Adk.Implementations.Models;
+using NTG.Adk.Operators.Agents;
+using NTG.Adk.Operators.Runners;
+
+// Create LLM
+var llm = new GeminiLlm("gemini-2.0-flash-exp");
+
+// Create agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Assistant",
+    Instruction = "You are a helpful assistant"
+};
+
+// Run with InMemoryRunner
+var runner = new InMemoryRunner(agent, appName: "MyApp");
+
+await foreach (var evt in runner.RunAsync(
+    userId: "user001",
+    sessionId: "session001",
+    userInput: "Hello!"))
+{
+    if (evt.Content?.Parts != null)
+    {
+        foreach (var part in evt.Content.Parts)
+        {
+            if (part.Text != null)
+                Console.WriteLine($"[{evt.Author}] {part.Text}");
+        }
+    }
+}
+```
+
+================================================================================
+LLM ADAPTERS
+================================================================================
+
+NTG.Adk supports multiple LLM providers through the ILlm port interface:
+
+1. GeminiLlm - Google Gemini models
+2. OpenAILlm - OpenAI GPT models
+3. MockLlm - Testing and development
+
+--- Gemini LLM ---
+
+```csharp
+using NTG.Adk.Implementations.Models;
+
+// Using API Key
+var geminiApiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
+var llm = new GeminiLlm(
+    modelId: "gemini-2.0-flash-exp",
+    apiKey: geminiApiKey,
+    projectId: "my-project"
+);
+
+// Using Application Default Credentials (ADC)
+var llm = new GeminiLlm(modelId: "gemini-2.0-flash-exp");
+
+// With generation config
+var llm = new GeminiLlm("gemini-2.0-flash-exp")
+{
+    Temperature = 0.7,
+    TopP = 0.95,
+    TopK = 40,
+    MaxOutputTokens = 2048
+};
+
+// Supported models:
+// - gemini-2.0-flash-exp
+// - gemini-1.5-flash
+// - gemini-1.5-pro
+```
+
+--- OpenAI LLM ---
+
+```csharp
+using NTG.Adk.Implementations.Models;
+
+var openaiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+var llm = new OpenAILlm(
+    modelId: "gpt-4o-mini",
+    apiKey: openaiApiKey
+);
+
+// With generation config
+var llm = new OpenAILlm("gpt-4o-mini", apiKey)
+{
+    Temperature = 0.7,
+    MaxTokens = 1000
+};
+
+// Supported models:
+// - gpt-4o
+// - gpt-4o-mini
+// - gpt-4-turbo
+// - gpt-3.5-turbo
+```
+
+--- Mock LLM (Testing) ---
+
+```csharp
+using NTG.Adk.Implementations.Models;
+
+var mockLlm = new MockLlm();
+
+// Returns predefined responses for testing
+var agent = new LlmAgent(mockLlm, "mock-model")
+{
+    Name = "TestAgent",
+    Instruction = "Test instruction"
+};
+```
+
+================================================================================
+AGENT TYPES
+================================================================================
+
+NTG.Adk supports three categories of agents:
+
+1. LlmAgent - LLM-powered reasoning agents
+2. Workflow Agents - Deterministic orchestration (Sequential, Parallel, Loop)
+3. Custom Agents - Extend IAgent interface
+
+--- LlmAgent ---
+
+LLM-powered agent with reasoning, function calling, and state management.
+
+```csharp
+using NTG.Adk.Operators.Agents;
+
+var agent = new LlmAgent(llm, modelId: "gemini-2.0-flash-exp")
+{
+    // Required
+    Name = "Assistant",
+
+    // Optional configuration
+    Instruction = "You are a helpful assistant",
+    Description = "Answers user questions",
+    OutputKey = "assistant_response",  // Auto-save response to session state
+    EnableAutoFlow = true,              // Enable automatic agent delegation
+    Tools = new List<ITool>(),          // Function calling tools
+    DisallowTransferToParent = false,   // Allow escalation to parent
+    DisallowTransferToChildren = false  // Allow delegation to children
+};
+
+// Add sub-agents for hierarchical routing
+agent.AddSubAgents(subAgent1, subAgent2);
+```
+
+--- SequentialAgent ---
+
+Execute agents in order, each receiving previous agent's output.
+
+```csharp
+using NTG.Adk.Operators.Workflows;
+
+var step1 = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Validator",
+    Instruction = "Validate the input",
+    OutputKey = "validation_result"
+};
+
+var step2 = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Processor",
+    Instruction = "Process the validated data from state key 'validation_result'",
+    OutputKey = "final_result"
+};
+
+var pipeline = new SequentialAgent(
+    name: "DataPipeline",
+    agents: new[] { step1, step2 }
+);
+
+var runner = new InMemoryRunner(pipeline, appName: "PipelineApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "Process this"))
+{
+    // Handle events
+}
+```
+
+--- ParallelAgent ---
+
+Execute multiple agents concurrently, aggregate results.
+
+```csharp
+using NTG.Adk.Operators.Workflows;
+
+var analyst1 = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "SentimentAnalyst",
+    Instruction = "Analyze sentiment of the text",
+    OutputKey = "sentiment"
+};
+
+var analyst2 = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "TopicAnalyst",
+    Instruction = "Extract main topics from the text",
+    OutputKey = "topics"
+};
+
+var parallel = new ParallelAgent(
+    name: "TextAnalysis",
+    agents: new[] { analyst1, analyst2 }
+);
+
+// Both agents run concurrently
+var runner = new InMemoryRunner(parallel, appName: "AnalysisApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "Analyze this text"))
+{
+    // Results in state: sentiment, topics
+}
+```
+
+--- LoopAgent ---
+
+Execute agent repeatedly with termination condition.
+
+```csharp
+using NTG.Adk.Operators.Workflows;
+
+var improver = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Improver",
+    Instruction = "Improve the text in state key 'current_text'",
+    OutputKey = "current_text"  // Overwrites each iteration
+};
+
+var loop = new LoopAgent(
+    name: "ImprovementLoop",
+    agent: improver,
+    maxIterations: 3
+);
+
+var runner = new InMemoryRunner(loop, appName: "LoopApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "Improve this"))
+{
+    // Runs 3 iterations
+}
+```
+
+--- Custom Agent ---
+
+Implement IAgent for full control:
+
+```csharp
+using NTG.Adk.CoreAbstractions.Agents;
+using NTG.Adk.CoreAbstractions.Events;
+using NTG.Adk.CoreAbstractions.Sessions;
+
+public class CustomAgent : IAgent
+{
+    public string Name { get; set; } = "CustomAgent";
+    public string? Description { get; set; }
+
+    public async IAsyncEnumerable<IEvent> RunAsync(
+        IInvocationContext context,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        // Custom logic here
+        var response = $"Processed: {context.UserInput}";
+
+        yield return new Event
+        {
+            Author = Name,
+            Content = new Content
+            {
+                Role = "agent",
+                Parts = new List<IPart>
+                {
+                    new Part { Text = response }
+                }
+            }
+        };
+    }
+}
+```
+
+================================================================================
+SESSION MANAGEMENT
+================================================================================
+
+Sessions manage conversation state with app/user/session hierarchy.
+
+--- InMemorySessionService ---
+
+```csharp
+using NTG.Adk.Implementations.Sessions;
+
+var sessionService = new InMemorySessionService();
+
+// Get or create session
+var session = await sessionService.GetOrCreateSessionAsync(
+    appName: "MyApp",
+    userId: "user001",
+    sessionId: "session001"
+);
+
+// Add event to session
+session.Events.Add(new Event
+{
+    Author = "user",
+    Content = new Content
+    {
+        Role = "user",
+        Parts = new List<IPart> { new Part { Text = "Hello" } }
+    }
+});
+
+// Save session
+await sessionService.SaveSessionAsync(session);
+
+// Session state (key-value storage)
+session.State.Set("user_name", "Alice");
+var name = session.State.Get<string>("user_name");
+```
+
+--- DatabaseSessionService ---
+
+Production-ready SQL persistence (PostgreSQL, MySQL, SQLite).
+
+```csharp
+using NTG.Adk.Implementations.Sessions;
+
+// PostgreSQL
+var connectionString = "Host=localhost;Database=adk;Username=user;Password=pass";
+var sessionService = new DatabaseSessionService(connectionString);
+
+// MySQL
+var connectionString = "Server=localhost;Database=adk;User=user;Password=pass";
+var sessionService = new DatabaseSessionService(connectionString);
+
+// SQLite
+var connectionString = "Data Source=adk.db";
+var sessionService = new DatabaseSessionService(connectionString);
+
+// Auto-creates schema on first use
+var session = await sessionService.GetOrCreateSessionAsync(
+    appName: "ProductionApp",
+    userId: "user001",
+    sessionId: "session001"
+);
+```
+
+--- InvocationContext ---
+
+Context passed to agents during execution.
+
+```csharp
+using NTG.Adk.Implementations.Sessions;
+
+// Create context
+var context = InvocationContext.Create(
+    session: session,
+    userInput: "What is the weather?"
+);
+
+// Or use static helper
+var context = InvocationContext.Create();
+
+// Update with user input
+var updatedContext = context.WithUserInput("New query");
+
+// Pass to agent
+await foreach (var evt in agent.RunAsync(updatedContext))
+{
+    // Handle events
+}
+```
+
+================================================================================
+RUNNER PATTERN
+================================================================================
+
+Runners orchestrate agent execution with integrated services.
+
+--- InMemoryRunner ---
+
+Auto-initialized in-memory services for development/testing.
+
+```csharp
+using NTG.Adk.Operators.Runners;
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Assistant",
+    Instruction = "You are helpful"
+};
+
+var runner = new InMemoryRunner(
+    rootAgent: agent,
+    appName: "MyApp"
+);
+
+// Run with user/session isolation
+await foreach (var evt in runner.RunAsync(
+    userId: "user001",
+    sessionId: "session001",
+    userInput: "Hello!"))
+{
+    Console.WriteLine($"[{evt.Author}] {evt.Content?.Parts?.FirstOrDefault()?.Text}");
+}
+
+// Streaming
+await foreach (var evt in runner.RunStreamAsync(
+    userId: "user001",
+    sessionId: "session001",
+    userInput: "Tell me a story"))
+{
+    // Real-time streaming events
+}
+```
+
+--- Custom Runner with Services ---
+
+```csharp
+using NTG.Adk.Bootstrap;
+using NTG.Adk.Implementations.Sessions;
+using NTG.Adk.Implementations.Artifacts;
+
+var sessionService = new DatabaseSessionService(connectionString);
+var artifactService = new FileArtifactService("/data/artifacts");
+
+var runner = new Runner(
+    rootAgent: agent,
+    sessionService: sessionService,
+    artifactService: artifactService
+);
+
+var result = await runner.RunAsync(
+    appName: "ProductionApp",
+    userId: "user001",
+    sessionId: "session001",
+    userInput: "Process this"
+);
+```
+
+================================================================================
+TOOLS AND FUNCTION CALLING
+================================================================================
+
+Tools enable agents to perform actions via function calling.
+
+--- FunctionTool ---
+
+Wrap C# methods as tools:
+
+```csharp
+using NTG.Adk.Implementations.Tools;
+
+// Simple function
+var weatherTool = FunctionTool.Create(
+    func: (string city) => $"Weather in {city}: 22°C, Sunny",
+    name: "get_weather",
+    description: "Get current weather for a city"
+);
+
+// With multiple parameters
+var calculatorTool = FunctionTool.Create(
+    func: (double a, double b, string operation) =>
+    {
+        return operation switch
+        {
+            "add" => a + b,
+            "subtract" => a - b,
+            "multiply" => a * b,
+            "divide" => a / b,
+            _ => throw new ArgumentException("Invalid operation")
+        };
+    },
+    name: "calculate",
+    description: "Perform math operations"
+);
+
+// Add to agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ToolAgent",
+    Instruction = "Use tools to answer questions",
+    Tools = new[] { weatherTool, calculatorTool }
+};
+```
+
+--- Custom Tool (ITool) ---
+
+```csharp
+using NTG.Adk.CoreAbstractions.Tools;
+using NTG.Adk.Boundary.Tools;
+
+public class CustomTool : ITool
+{
+    public string Name => "custom_tool";
+    public string? Description => "Custom tool description";
+
+    public IFunctionDeclaration GetDeclaration()
+    {
+        return new FunctionDeclaration
+        {
+            Name = Name,
+            Description = Description,
+            Parameters = new Schema
+            {
+                Type = "object",
+                Properties = new Dictionary<string, Schema>
+                {
+                    ["input"] = new Schema { Type = "string", Description = "Input parameter" }
+                },
+                Required = new[] { "input" }
+            }
+        };
+    }
+
+    public async Task<object> ExecuteAsync(
+        IReadOnlyDictionary<string, object> args,
+        IToolContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var input = args["input"].ToString();
+        return $"Processed: {input}";
+    }
+}
+```
+
+--- Built-in Tools ---
+
+Google Search Tool:
+
+```csharp
+using NTG.Adk.Implementations.Tools.BuiltIn;
+
+var apiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY");
+var searchEngineId = Environment.GetEnvironmentVariable("GOOGLE_SEARCH_ENGINE_ID");
+
+var searchTool = new GoogleSearchTool(apiKey, searchEngineId);
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "SearchAgent",
+    Instruction = "Use Google Search to answer questions",
+    Tools = new[] { searchTool }
+};
+```
+
+Code Execution Tool:
+
+```csharp
+using NTG.Adk.Implementations.Tools.BuiltIn;
+
+var codeExecutor = new CodeExecutionTool();
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "CodeAgent",
+    Instruction = "You can execute C# code using the code_execution tool",
+    Tools = new[] { codeExecutor }
+};
+```
+
+Files Retrieval Tool (Keyword-based RAG):
+
+```csharp
+using NTG.Adk.Implementations.Tools.Retrieval;
+
+var retrieval = new FilesRetrievalTool(
+    name: "search_docs",
+    description: "Search documentation",
+    inputDir: "./docs",
+    filePattern: "*.md"
+);
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "DocAgent",
+    Instruction = "Search docs to answer questions",
+    Tools = new[] { retrieval }
+};
+```
+
+Agentic Retrieval (Grep + LLM ranking):
+
+```csharp
+using NTG.Adk.Implementations.Tools.Retrieval;
+
+var agenticRetrieval = new AgenticFilesRetrievalTool(
+    name: "search_docs",
+    description: "Search documentation with LLM-powered ranking",
+    inputDir: "./docs",
+    llm: llm,  // LLM for query expansion and ranking
+    filePattern: "*.md"
+);
+
+// Uses:
+// 1. LLM expands query into search terms
+// 2. Multi-pass grep search
+// 3. LLM ranks results by relevance
+```
+
+================================================================================
+MULTI-AGENT ORCHESTRATION
+================================================================================
+
+--- AutoFlow (Automatic Delegation) ---
+
+Enable LLM-driven agent routing:
+
+```csharp
+using NTG.Adk.Operators.Agents;
+
+// Create specialists
+var mathAgent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "MathSpecialist",
+    Description = "Expert in mathematics and calculations",
+    Instruction = "Solve math problems step-by-step"
+};
+
+var codeAgent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "CodeSpecialist",
+    Description = "Programming expert",
+    Instruction = "Write clean, documented code"
+};
+
+// Create coordinator with AutoFlow
+var coordinator = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Coordinator",
+    Instruction = @"Route questions to specialists.
+        - MathSpecialist: For math problems
+        - CodeSpecialist: For programming
+        Use transfer_to_agent tool to delegate.",
+    EnableAutoFlow = true  // Auto-adds transfer_to_agent tool
+};
+
+// Add sub-agents
+coordinator.AddSubAgents(mathAgent, codeAgent);
+
+// LLM automatically chooses which specialist to use
+var runner = new InMemoryRunner(coordinator, appName: "AutoFlowApp");
+await foreach (var evt in runner.RunAsync(
+    "user001", "session001", "Calculate fibonacci(10)"))
+{
+    // Coordinator delegates to MathSpecialist
+}
+```
+
+--- Hierarchical Agent Routing ---
+
+```csharp
+// Three-level hierarchy
+var leafAgent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "LeafAgent",
+    Instruction = "Handle specific task"
+};
+
+var middleAgent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "MiddleAgent",
+    Instruction = "Coordinate leaf agents",
+    EnableAutoFlow = true
+};
+middleAgent.AddSubAgents(leafAgent);
+
+var rootAgent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "RootAgent",
+    Instruction = "Top-level coordinator",
+    EnableAutoFlow = true
+};
+rootAgent.AddSubAgents(middleAgent);
+
+// Root → Middle → Leaf delegation
+var runner = new InMemoryRunner(rootAgent, appName: "HierarchyApp");
+```
+
+================================================================================
+A2A PROTOCOL (AGENT-TO-AGENT INTEROPERABILITY)
+================================================================================
+
+A2A enables seamless communication with Google Agent ecosystem.
+
+```csharp
+using NTG.Adk.Operators.A2A;
+using A2A;
+
+// Create ADK agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "A2AAgent",
+    Instruction = "Answer questions via A2A protocol"
+};
+
+var runner = new InMemoryRunner(agent, appName: "A2AApp");
+
+// Wrap with A2A executor
+var a2aExecutor = new A2aAgentExecutor(runner);
+
+// Handle A2A messages
+var a2aMessage = new AgentMessage
+{
+    MessageId = Guid.NewGuid().ToString(),
+    Role = MessageRole.User,
+    Parts = new List<IPart>
+    {
+        new TextPart { Text = "Hello from A2A!" }
+    }
+};
+
+await foreach (var a2aEvent in a2aExecutor.ExecuteAsync(
+    message: a2aMessage,
+    taskId: Guid.NewGuid().ToString(),
+    contextId: "ADK/A2AApp/user001/session001"))
+{
+    if (a2aEvent is TaskStatusUpdateEvent statusUpdate)
+    {
+        Console.WriteLine($"Status: {statusUpdate.Status}");
+    }
+    else if (a2aEvent is TaskArtifactUpdateEvent artifactUpdate)
+    {
+        Console.WriteLine($"Artifact: {artifactUpdate.Artifact}");
+    }
+}
+```
+
+================================================================================
+MCP PROTOCOL (MODEL CONTEXT PROTOCOL)
+================================================================================
+
+MCP enables connecting to MCP servers and using their tools.
+
+--- Stdio Transport ---
+
+```csharp
+using NTG.Adk.Boundary.Mcp;
+using NTG.Adk.Implementations.Mcp;
+
+// Connect to MCP server via stdio
+var connectionParams = new StdioConnectionParams
+{
+    Command = "npx",
+    Arguments = new[] { "-y", "@modelcontextprotocol/server-filesystem", "/tmp" }
+};
+
+var mcpToolset = new McpToolset(connectionParams);
+
+// Connect and get tools
+await mcpToolset.ConnectAsync();
+var tools = await mcpToolset.GetToolsAsync();
+
+// Use MCP tools with agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "McpAgent",
+    Instruction = "You have access to filesystem tools via MCP",
+    Tools = tools.ToList()
+};
+
+var runner = new InMemoryRunner(agent, appName: "McpApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "List files in /tmp"))
+{
+    // Agent uses MCP filesystem tools
+}
+
+// Cleanup
+await mcpToolset.DisconnectAsync();
+```
+
+--- SSE Transport ---
+
+```csharp
+var sseParams = new SseConnectionParams
+{
+    Url = "http://localhost:3000/sse"
+};
+
+var mcpToolset = new McpToolset(sseParams);
+await mcpToolset.ConnectAsync();
+```
+
+--- HTTP Transport ---
+
+```csharp
+var httpParams = new HttpConnectionParams
+{
+    Url = "http://localhost:3000/mcp"
+};
+
+var mcpToolset = new McpToolset(httpParams);
+await mcpToolset.ConnectAsync();
+```
+
+================================================================================
+OPENAPI TOOLSET (REST API AUTO-INTEGRATION)
+================================================================================
+
+Auto-generate tools from OpenAPI 3.0 specifications.
+
+--- Basic Usage ---
+
+```csharp
+using NTG.Adk.Implementations.Tools.OpenApi;
+
+// Load OpenAPI spec (JSON or YAML)
+var openApiSpec = File.ReadAllText("petstore-openapi.json");
+
+// Create toolset from spec
+var toolset = new OpenAPIToolset(openApiSpec, format: "json");
+
+// Get all tools (one per operation)
+var tools = toolset.GetTools();
+
+// Use with agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ApiAgent",
+    Instruction = "Interact with the Petstore API using these tools",
+    Tools = tools
+};
+
+var runner = new InMemoryRunner(agent, appName: "ApiApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "List all pets"))
+{
+    // Agent calls appropriate API endpoint
+}
+```
+
+--- With Authentication ---
+
+API Key Authentication:
+
+```csharp
+using NTG.Adk.Boundary.Tools.Auth;
+
+var authScheme = new ApiKeyAuthScheme
+{
+    In = "header",
+    Name = "X-API-Key"
+};
+
+var authCredential = new ApiKeyCredential
+{
+    ApiKey = Environment.GetEnvironmentVariable("API_KEY")!
+};
+
+var toolset = new OpenAPIToolset(
+    openApiSpec,
+    format: "json",
+    authScheme: authScheme,
+    authCredential: authCredential
+);
+```
+
+Bearer Token:
+
+```csharp
+var authScheme = new BearerAuthScheme();
+
+var authCredential = new BearerTokenCredential
+{
+    Token = Environment.GetEnvironmentVariable("BEARER_TOKEN")!
+};
+
+var toolset = new OpenAPIToolset(openApiSpec, "json", authScheme, authCredential);
+```
+
+Basic Auth:
+
+```csharp
+var authScheme = new BasicAuthScheme();
+
+var authCredential = new BasicAuthCredential
+{
+    Username = "user",
+    Password = "pass"
+};
+
+var toolset = new OpenAPIToolset(openApiSpec, "json", authScheme, authCredential);
+```
+
+================================================================================
+MEMORY SERVICE (SEARCHABLE CONVERSATION HISTORY)
+================================================================================
+
+Memory enables agents to search past conversations.
+
+--- InMemoryMemoryService ---
+
+```csharp
+using NTG.Adk.Implementations.Memory;
+
+var memoryService = new InMemoryMemoryService();
+
+// Add session to searchable memory
+var session = await sessionService.GetOrCreateSessionAsync("MyApp", "user001", "session001");
+await memoryService.AddSessionToMemoryAsync(session);
+
+// Search past conversations
+var searchResult = await memoryService.SearchMemoryAsync(
+    appName: "MyApp",
+    userId: "user001",
+    query: "What did we discuss about retries?"
+);
+
+// Process memories
+foreach (var memory in searchResult.Memories)
+{
+    Console.WriteLine($"[{memory.Author}] {memory.Content}");
+    Console.WriteLine($"Timestamp: {memory.Timestamp}");
+}
+```
+
+Keyword-based search:
+- Extracts words (3+ chars) from query
+- Searches all user sessions for matching events
+- Returns matching conversation turns
+
+================================================================================
+ARTIFACT SERVICE (FILE STORAGE)
+================================================================================
+
+Artifacts store files with versioning support.
+
+--- InMemoryArtifactService ---
+
+```csharp
+using NTG.Adk.Implementations.Artifacts;
+
+var artifactService = new InMemoryArtifactService();
+
+// Save artifact
+var data = Encoding.UTF8.GetBytes("Hello, World!");
+var version = await artifactService.SaveArtifactAsync(
+    appName: "MyApp",
+    userId: "user001",
+    sessionId: "session001",
+    filename: "greeting.txt",
+    data: data,
+    mimeType: "text/plain"
+);
+
+Console.WriteLine($"Saved version: {version}");
+
+// Load artifact (latest version)
+var loaded = await artifactService.LoadArtifactAsync(
+    "MyApp", "user001", "session001", "greeting.txt"
+);
+
+Console.WriteLine($"Content: {Encoding.UTF8.GetString(loaded.Data)}");
+Console.WriteLine($"Version: {loaded.Version}");
+
+// Load specific version
+var v1 = await artifactService.LoadArtifactAsync(
+    "MyApp", "user001", "session001", "greeting.txt", version: 1
+);
+
+// List all versions
+var versions = await artifactService.ListArtifactVersionsAsync(
+    "MyApp", "user001", "session001", "greeting.txt"
+);
+```
+
+--- FileArtifactService ---
+
+Disk-based storage with hierarchical structure:
+
+```csharp
+using NTG.Adk.Implementations.Artifacts;
+
+var artifactService = new FileArtifactService(baseDirectory: "/data/artifacts");
+
+// Storage structure: {baseDir}/{appName}/{userId}/{sessionId}/{filename}/v1.dat
+var version = await artifactService.SaveArtifactAsync(
+    appName: "MyApp",
+    userId: "user001",
+    sessionId: "session001",
+    filename: "document.pdf",
+    data: pdfBytes,
+    mimeType: "application/pdf",
+    metadata: new Dictionary<string, object>
+    {
+        ["author"] = "Alice",
+        ["category"] = "reports"
+    }
+);
+
+// Metadata stored as JSON alongside data
+// Example: /data/artifacts/MyApp/user001/session001/document.pdf/v1.metadata.json
+```
+
+================================================================================
+PLANNING & REASONING
+================================================================================
+
+Planners guide LLM reasoning strategies.
+
+--- BuiltInPlanner ---
+
+Uses model's native thinking capabilities (Gemini 2.0+):
+
+```csharp
+using NTG.Adk.Implementations.Planners;
+
+var planner = new BuiltInPlanner();
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ThinkingAgent",
+    Instruction = "Solve complex problems step by step",
+    Planner = planner  // Enables extended thinking
+};
+```
+
+--- PlanReActPlanner ---
+
+Structured reasoning with explicit planning, action, reasoning phases:
+
+```csharp
+using NTG.Adk.Implementations.Planners;
+
+var planner = new PlanReActPlanner();
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ReasoningAgent",
+    Instruction = "Complex multi-step reasoning tasks",
+    Planner = planner,
+    Tools = tools  // ReAct works with tools
+};
+
+// Agent responses structured with tags:
+// /*PLANNING*/ - Initial plan
+// /*ACTION*/ - Tool calls
+// /*REASONING*/ - Explain results
+// /*REPLANNING*/ - Revise plan if needed
+// /*FINAL_ANSWER*/ - Final response
+
+// Parse structured response
+var response = await runner.RunAsync("user001", "session001", "Research topic X");
+var parsed = PlanReActPlanner.ParseResponse(response);
+
+Console.WriteLine($"Planning: {parsed.Planning}");
+Console.WriteLine($"Actions: {parsed.Actions.Count}");
+Console.WriteLine($"Reasoning: {parsed.Reasoning.Count}");
+Console.WriteLine($"Final Answer: {parsed.FinalAnswer}");
+```
+
+================================================================================
+EVENT STREAMING
+================================================================================
+
+All agent execution returns IAsyncEnumerable<IEvent> for real-time streaming.
+
+--- Event Structure ---
+
+```csharp
+public interface IEvent
+{
+    string? Author { get; }           // Agent name
+    IContent? Content { get; }        // Message content
+    IEventActions? Actions { get; }   // Transfer/escalation actions
+}
+
+public interface IContent
+{
+    string Role { get; }              // user, agent, tool
+    IReadOnlyList<IPart> Parts { get; } // Message parts
+}
+
+public interface IPart
+{
+    string? Text { get; }             // Text content
+    IFunctionCall? FunctionCall { get; }      // Tool invocation
+    IFunctionResponse? FunctionResponse { get; } // Tool result
+    byte[]? InlineData { get; }       // Binary data
+    string? MimeType { get; }         // Content type
+}
+```
+
+--- Processing Events ---
+
+```csharp
+await foreach (var evt in agent.RunAsync(context))
+{
+    // Text response
+    if (evt.Content?.Parts != null)
+    {
+        foreach (var part in evt.Content.Parts)
+        {
+            if (part.Text != null)
+            {
+                Console.WriteLine($"[{evt.Author}] {part.Text}");
+            }
+
+            // Function call
+            if (part.FunctionCall != null)
+            {
+                Console.WriteLine($"Calling: {part.FunctionCall.Name}");
+                foreach (var arg in part.FunctionCall.Args)
+                {
+                    Console.WriteLine($"  {arg.Key}: {arg.Value}");
+                }
+            }
+
+            // Function response
+            if (part.FunctionResponse != null)
+            {
+                Console.WriteLine($"Tool result: {part.FunctionResponse.Response}");
+            }
+        }
+    }
+
+    // Transfer action
+    if (!string.IsNullOrEmpty(evt.Actions?.TransferTo))
+    {
+        Console.WriteLine($"Transferring to: {evt.Actions.TransferTo}");
+    }
+}
+```
+
+================================================================================
+STATE MANAGEMENT
+================================================================================
+
+Session state provides key-value storage shared across agents.
+
+--- State Prefixes ---
+
+```csharp
+// app: - Application-wide settings
+session.State.Set("app:version", "1.0.0");
+
+// user: - User-specific data
+session.State.Set("user:preferences", userPrefs);
+
+// temp: - Temporary session data
+session.State.Set("temp:current_step", 2);
+
+// No prefix - session-scoped
+session.State.Set("conversation_topic", "weather");
+```
+
+--- Type-Safe Access ---
+
+```csharp
+// Set typed values
+session.State.Set<string>("user_name", "Alice");
+session.State.Set<int>("user_age", 30);
+session.State.Set<DateTime>("last_login", DateTime.UtcNow);
+
+// Get typed values
+var name = session.State.Get<string>("user_name");
+var age = session.State.Get<int>("user_age");
+var lastLogin = session.State.Get<DateTime>("last_login");
+
+// Check existence
+if (session.State.Contains("user_name"))
+{
+    // Key exists
+}
+
+// Remove key
+session.State.Remove("temp_data");
+```
+
+--- Agent Output Keys ---
+
+Automatically save agent responses to state:
+
+```csharp
+var agent1 = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Agent1",
+    Instruction = "Generate summary",
+    OutputKey = "summary"  // Auto-saves response to state
+};
+
+var agent2 = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Agent2",
+    Instruction = "Expand the summary in state key 'summary'",
+    OutputKey = "detailed_text"
+};
+
+var pipeline = new SequentialAgent("Pipeline", new[] { agent1, agent2 });
+
+// After execution:
+// session.State.Get<string>("summary") - Agent1's output
+// session.State.Get<string>("detailed_text") - Agent2's output
+```
+
+================================================================================
+CONFIGURATION & GENERATION CONFIG
+================================================================================
+
+Control LLM behavior with generation parameters.
+
+--- Gemini Generation Config ---
+
+```csharp
+var llm = new GeminiLlm("gemini-2.0-flash-exp")
+{
+    Temperature = 0.7,      // Randomness (0.0-2.0, default: 1.0)
+    TopP = 0.95,            // Nucleus sampling (0.0-1.0, default: 0.95)
+    TopK = 40,              // Top-k sampling (1-100, default: 40)
+    MaxOutputTokens = 2048  // Max response length
+};
+```
+
+--- OpenAI Generation Config ---
+
+```csharp
+var llm = new OpenAILlm("gpt-4o-mini", apiKey)
+{
+    Temperature = 0.7,  // Randomness (0.0-2.0)
+    MaxTokens = 1000,   // Max response length
+    TopP = 0.95         // Nucleus sampling
+};
+```
+
+================================================================================
+ERROR HANDLING
+================================================================================
+
+```csharp
+using NTG.Adk.CoreAbstractions.Exceptions;
+
+try
+{
+    await foreach (var evt in agent.RunAsync(context))
+    {
+        // Process events
+    }
+}
+catch (AgentException ex)
+{
+    // Agent-specific errors
+    Console.WriteLine($"Agent error: {ex.Message}");
+}
+catch (LlmException ex)
+{
+    // LLM provider errors
+    Console.WriteLine($"LLM error: {ex.Message}");
+}
+catch (ToolException ex)
+{
+    // Tool execution errors
+    Console.WriteLine($"Tool error: {ex.Message}");
+}
+catch (Exception ex)
+{
+    // General errors
+    Console.WriteLine($"Unexpected error: {ex.Message}");
+}
+```
+
+================================================================================
+BEST PRACTICES
+================================================================================
+
+1. Architecture
+   - Follow A.D.D V3 layers strictly
+   - Operators call ports (interfaces), not implementations
+   - Keep business logic in Operators layer
+   - Use dependency injection for services
+
+2. Session Management
+   - Use InMemoryRunner for dev/testing
+   - Use DatabaseSessionService for production
+   - Implement proper session cleanup
+   - Use state prefixes (app:, user:, temp:)
+
+3. Agent Design
+   - Write clear, specific instructions
+   - Use OutputKey for automatic state persistence
+   - Leverage AutoFlow for multi-agent routing
+   - Test with MockLlm before using real LLMs
+
+4. Error Handling
+   - Catch specific exceptions
+   - Implement retry logic for LLM calls
+   - Validate tool inputs
+   - Log errors for debugging
+
+5. Performance
+   - Use streaming for long responses
+   - Implement caching for repeated queries
+   - Limit max iterations for LoopAgent
+   - Use ParallelAgent for independent tasks
+
+6. Security
+   - Store API keys in environment variables
+   - Validate user inputs
+   - Implement rate limiting
+   - Sanitize tool outputs
+
+================================================================================
+PYTHON ADK COMPATIBILITY
+================================================================================
+
+NTG.Adk maintains 99% API compatibility with Google ADK Python:
+
+Python ADK                          | C# NTG.Adk
+------------------------------------|------------------------------------
+google.adk.agents.BaseAgent         | NTG.Adk.CoreAbstractions.Agents.IAgent
+google.adk.agents.LlmAgent          | NTG.Adk.Operators.Agents.LlmAgent
+google.adk.runners.Runner           | NTG.Adk.Operators.Runners.Runner
+google.adk.runners.InMemoryRunner   | NTG.Adk.Operators.Runners.InMemoryRunner
+google.adk.models.GeminiLlm         | NTG.Adk.Implementations.Models.GeminiLlm
+google.adk.models.OpenAILlm         | NTG.Adk.Implementations.Models.OpenAILlm
+google.adk.tools.BaseTool           | NTG.Adk.CoreAbstractions.Tools.ITool
+google.adk.tools.FunctionTool       | NTG.Adk.Implementations.Tools.FunctionTool
+google.adk.sessions.Session         | NTG.Adk.CoreAbstractions.Sessions.ISession
+google.adk.memory.MemoryService     | NTG.Adk.CoreAbstractions.Memory.IMemoryService
+google.adk.artifacts.ArtifactService| NTG.Adk.CoreAbstractions.Artifacts.IArtifactService
+
+Behavioral compatibility: 99%
+See COMPATIBILITY.md for detailed feature matrix.
+
+================================================================================
+RESOURCES
+================================================================================
+
+Documentation: https://github.com/ntg/adk-csharp/docs
+Samples: https://github.com/ntg/adk-csharp/samples
+Python ADK: https://github.com/google/adk-python
+A.D.D V3 Architecture: https://abstractdriven.com
+License: Apache 2.0
+
+================================================================================
+VERSION INFORMATION
+================================================================================
+
+NTG.Adk Version: 1.4.0-alpha
+.NET Target: 8.0 LTS (until Nov 2026)
+Python ADK Parity: 99%
+Production Ready: Yes
+Last Updated: 2025-10-25
+
+================================================================================
