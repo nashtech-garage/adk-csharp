@@ -1,0 +1,468 @@
+{
+  "format": 1,
+  "restore": {
+    "E:\\repos\\adk-csharp\\samples\\GeminiAgent\\GeminiAgent.csproj": {}
+  },
+  "projects": {
+    "E:\\repos\\adk-csharp\\samples\\GeminiAgent\\GeminiAgent.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\repos\\adk-csharp\\samples\\GeminiAgent\\GeminiAgent.csproj",
+        "projectName": "GeminiAgent",
+        "projectPath": "E:\\repos\\adk-csharp\\samples\\GeminiAgent\\GeminiAgent.csproj",
+        "packagesPath": "C:\\Users\\quangvu\\.nuget\\packages\\",
+        "outputPath": "E:\\repos\\adk-csharp\\samples\\GeminiAgent\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\quangvu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Bootstrap\\NTG.Adk.Bootstrap.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Bootstrap\\NTG.Adk.Bootstrap.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\repos\\adk-csharp\\src\\NTG.Adk.Bootstrap\\NTG.Adk.Bootstrap.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Bootstrap\\NTG.Adk.Bootstrap.csproj",
+        "projectName": "NTG.Adk.Bootstrap",
+        "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Bootstrap\\NTG.Adk.Bootstrap.csproj",
+        "packagesPath": "C:\\Users\\quangvu\\.nuget\\packages\\",
+        "outputPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Bootstrap\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\quangvu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj",
+        "projectName": "NTG.Adk.Boundary",
+        "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj",
+        "packagesPath": "C:\\Users\\quangvu\\.nuget\\packages\\",
+        "outputPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\quangvu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj",
+        "projectName": "NTG.Adk.CoreAbstractions",
+        "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj",
+        "packagesPath": "C:\\Users\\quangvu\\.nuget\\packages\\",
+        "outputPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\quangvu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj",
+        "projectName": "NTG.Adk.Implementations",
+        "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj",
+        "packagesPath": "C:\\Users\\quangvu\\.nuget\\packages\\",
+        "outputPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\quangvu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Google.Cloud.AIPlatform.V1": {
+              "target": "Package",
+              "version": "[3.53.0, )"
+            },
+            "Microsoft.Extensions.DependencyInjection.Abstractions": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
+            "OpenAI": {
+              "target": "Package",
+              "version": "[2.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj",
+        "projectName": "NTG.Adk.Operators",
+        "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\NTG.Adk.Operators.csproj",
+        "packagesPath": "C:\\Users\\quangvu\\.nuget\\packages\\",
+        "outputPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Operators\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\quangvu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Boundary\\NTG.Adk.Boundary.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.CoreAbstractions\\NTG.Adk.CoreAbstractions.csproj"
+              },
+              "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj": {
+                "projectPath": "E:\\repos\\adk-csharp\\src\\NTG.Adk.Implementations\\NTG.Adk.Implementations.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

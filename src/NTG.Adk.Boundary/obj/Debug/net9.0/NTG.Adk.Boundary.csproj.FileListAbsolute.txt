@@ -1,0 +1,11 @@
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\bin\Debug\net9.0\NTG.Adk.Boundary.deps.json
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\bin\Debug\net9.0\NTG.Adk.Boundary.dll
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\bin\Debug\net9.0\NTG.Adk.Boundary.pdb
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\NTG.Adk.Boundary.GeneratedMSBuildEditorConfig.editorconfig
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\NTG.Adk.Boundary.AssemblyInfoInputs.cache
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\NTG.Adk.Boundary.AssemblyInfo.cs
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\NTG.Adk.Boundary.csproj.CoreCompileInputs.cache
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\NTG.Adk.Boundary.dll
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\refint\NTG.Adk.Boundary.dll
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\NTG.Adk.Boundary.pdb
+E:\repos\adk-csharp\src\NTG.Adk.Boundary\obj\Debug\net9.0\ref\NTG.Adk.Boundary.dll

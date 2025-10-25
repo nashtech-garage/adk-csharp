@@ -1,0 +1,11 @@
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\bin\Release\net9.0\NTG.Adk.CoreAbstractions.deps.json
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\bin\Release\net9.0\NTG.Adk.CoreAbstractions.dll
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\bin\Release\net9.0\NTG.Adk.CoreAbstractions.pdb
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\NTG.Adk.CoreAbstractions.GeneratedMSBuildEditorConfig.editorconfig
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\NTG.Adk.CoreAbstractions.AssemblyInfoInputs.cache
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\NTG.Adk.CoreAbstractions.AssemblyInfo.cs
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\NTG.Adk.CoreAbstractions.csproj.CoreCompileInputs.cache
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\NTG.Adk.CoreAbstractions.dll
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\refint\NTG.Adk.CoreAbstractions.dll
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\NTG.Adk.CoreAbstractions.pdb
+E:\repos\adk-csharp\src\NTG.Adk.CoreAbstractions\obj\Release\net9.0\ref\NTG.Adk.CoreAbstractions.dll

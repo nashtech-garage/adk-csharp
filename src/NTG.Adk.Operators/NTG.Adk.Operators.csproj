@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTG.Adk.CoreAbstractions\NTG.Adk.CoreAbstractions.csproj" />
+    <ProjectReference Include="..\NTG.Adk.Boundary\NTG.Adk.Boundary.csproj" />
+    <ProjectReference Include="..\NTG.Adk.Implementations\NTG.Adk.Implementations.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
