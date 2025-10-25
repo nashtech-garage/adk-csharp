@@ -1,6 +1,8 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.CoreAbstractions.Artifacts;
+using NTG.Adk.CoreAbstractions.Memory;
 using NTG.Adk.CoreAbstractions.Sessions;
 
 namespace NTG.Adk.Implementations.Sessions;
@@ -14,6 +16,8 @@ public record InvocationContext : IInvocationContext
     public required ISession Session { get; init; }
     public required string Branch { get; init; }
     public string? UserInput { get; init; }
+    public IArtifactService? ArtifactService { get; init; }
+    public IMemoryService? MemoryService { get; init; }
 
     public IInvocationContext WithBranch(string newBranch) => this with { Branch = newBranch };
 

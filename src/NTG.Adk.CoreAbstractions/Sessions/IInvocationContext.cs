@@ -1,6 +1,9 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.CoreAbstractions.Artifacts;
+using NTG.Adk.CoreAbstractions.Memory;
+
 namespace NTG.Adk.CoreAbstractions.Sessions;
 
 /// <summary>
@@ -24,6 +27,16 @@ public interface IInvocationContext
     /// User input for this invocation
     /// </summary>
     string? UserInput { get; }
+
+    /// <summary>
+    /// Artifact service for file storage and versioning
+    /// </summary>
+    IArtifactService? ArtifactService { get; }
+
+    /// <summary>
+    /// Memory service for long-term agent memory
+    /// </summary>
+    IMemoryService? MemoryService { get; }
 
     /// <summary>
     /// Create a new context with a different branch

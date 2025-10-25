@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0
 
 using System.Collections.Concurrent;
+using NTG.Adk.CoreAbstractions.Memory;
 using NTG.Adk.CoreAbstractions.Sessions;
 
 namespace NTG.Adk.Implementations.Sessions;

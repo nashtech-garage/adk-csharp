@@ -1,6 +1,8 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.CoreAbstractions.Memory;
+
 namespace NTG.Adk.CoreAbstractions.Sessions;
 
 /// <summary>
@@ -121,25 +123,4 @@ public interface IMessage
     string? Content { get; }
     string? Branch { get; }
     DateTimeOffset Timestamp { get; }
-}
-
-/// <summary>
-/// Memory service interface (for long-term memory)
-/// </summary>
-public interface IMemoryService
-{
-    /// <summary>
-    /// Store a memory
-    /// </summary>
-    Task StoreAsync(string key, string value, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Retrieve a memory
-    /// </summary>
-    Task<string?> RetrieveAsync(string key, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Search memories
-    /// </summary>
-    Task<IReadOnlyList<string>> SearchAsync(string query, int topK = 5, CancellationToken cancellationToken = default);
 }
