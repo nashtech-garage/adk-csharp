@@ -10,13 +10,16 @@
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.53.0" />
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.10.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />
+    <PackageReference Include="Microsoft.OpenApi" Version="1.6.22" />
+    <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.22" />
     <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.3" />
     <PackageReference Include="ModelContextProtocol.Core" Version="0.4.0-preview.3" />
     <PackageReference Include="OpenAI" Version="2.5.0" />
+    <PackageReference Include="YamlDotNet" Version="16.2.0" />
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
