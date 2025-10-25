@@ -321,6 +321,66 @@ cd samples/HelloWorldAgent
 dotnet run
 ```
 
+## 🗺️ Roadmap
+
+### Phase 1 - Core Infrastructure ✅ COMPLETE
+- ✅ Multi-Agent Orchestration (Sequential, Parallel, Loop)
+- ✅ Session/Artifact/Memory Services (In-Memory)
+- ✅ A2A Protocol Integration
+- ✅ MCP Protocol Support (stdio, SSE, HTTP)
+- ✅ OpenAPI Toolset (REST API auto-integration)
+- ✅ Built-in Tools (Google Search, Code Execution)
+- ✅ LLM Adapters (Gemini, OpenAI)
+- ✅ .NET 8.0 LTS Migration
+
+### Phase 2 - Persistent Storage (In Progress)
+- ⏳ **DatabaseSessionService** - SQL persistence for sessions
+  - PostgreSQL, MySQL, SQLite support
+  - Production-ready session storage
+  - Multi-instance deployment support
+- ⏳ **FileArtifactService** - Local file system storage
+  - File-based artifact persistence
+  - Blob storage support (Azure, AWS S3, GCP)
+  - Artifact versioning and cleanup
+
+### Phase 3 - Advanced Features (Planned)
+- 📋 **Planner System** - Agent reasoning and planning
+  - BuiltInPlanner with extended thinking
+  - PlanReActPlanner for ReAct pattern
+  - Custom planner support
+- 📋 **FilesRetrieval** - RAG and document search
+  - Directory-based retrieval
+  - Semantic search capabilities
+  - LlamaIndex integration
+- 📋 **AgentEvaluator** - Testing and quality assurance
+  - Automated agent testing
+  - Benchmark framework
+  - Performance metrics
+
+### Phase 4 - Cloud Integration (Future)
+- 📋 **Cloud Storage Services**
+  - GCS Artifact Service (Google Cloud Storage)
+  - Azure Blob Artifact Service
+  - AWS S3 Artifact Service
+- 📋 **Vertex AI Integration**
+  - Vertex AI RAG Retrieval
+  - Vertex AI Search Tool
+  - Vertex AI Example Store
+- 📋 **Enterprise Features**
+  - Authentication & Authorization
+  - Rate limiting and quotas
+  - Audit logging and monitoring
+
+### Community Contributions Welcome! 🤝
+We welcome contributions for:
+- New LLM adapters (Anthropic Claude, Cohere, etc.)
+- Additional built-in tools
+- Cloud provider integrations
+- Performance optimizations
+- Documentation improvements
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## 📄 License
 
 Apache 2.0 License - see [LICENSE](LICENSE) file.

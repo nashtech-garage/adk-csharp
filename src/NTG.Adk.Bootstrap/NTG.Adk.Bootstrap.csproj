@@ -16,6 +16,21 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>NTG.Adk</PackageId>
+    <Version>1.4.0-alpha</Version>
+    <Authors>NTG</Authors>
+    <Company>NTG</Company>
+    <Description>NTG Agent Development Kit - Production-ready C# implementation of Google ADK with A.D.D V3 architecture. Includes multi-agent orchestration, LLM adapters (Gemini, OpenAI), MCP protocol, OpenAPI toolset, and comprehensive agent development features.</Description>
+    <PackageTags>adk;agent;ai;llm;google-adk;gemini;openai;mcp;openapi;a2a;multi-agent;orchestration</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

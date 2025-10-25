@@ -4,6 +4,21 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>NTG.Adk.Boundary</PackageId>
+    <Version>1.4.0-alpha</Version>
+    <Authors>NTG</Authors>
+    <Company>NTG</Company>
+    <Description>Boundary DTOs and contracts for NTG Agent Development Kit - A.D.D V3 architecture Layer 1</Description>
+    <PackageTags>adk;agent;ai;llm;google-adk;dto;boundary;contracts</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>
