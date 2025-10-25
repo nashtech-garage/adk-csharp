@@ -1,7 +1,7 @@
 # NTG.Adk - Agent Development Kit for .NET
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-8.0_LTS-512BD4)](https://dotnet.microsoft.com/)
 [![A.D.D V3](https://img.shields.io/badge/Architecture-A.D.D_V3-green)](https://abstractdriven.com)
 
 > **Production-ready C# implementation of Google's Agent Development Kit with 100% Python API compatibility**
@@ -16,17 +16,20 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 - 💾 **Artifact & Memory Services** - File storage and long-term agent memory
 - 🌐 **A2A Protocol** - Seamless interoperability with Google Agent ecosystem
 - 🔌 **MCP Protocol** - Connect to MCP servers and use their tools (stdio, SSE, HTTP)
+- 🌐 **OpenAPI Toolset** - Auto-generate tools from any REST API (JSON/YAML specs)
 - 🚀 **Runner Pattern** - Production-ready orchestration with integrated services
 - 🧩 **LLM Adapters** - Gemini and OpenAI production integrations
 - 🛠️ **Tool Ecosystem** - Function calling, custom tools, and built-in tools (Google Search, Code Execution)
 
 ## 📊 Status
 
-**Version**: 1.3.0-alpha
+**Version**: 1.4.0-alpha
+**Target Framework**: .NET 8.0 LTS (supported until Nov 2026)
 **Production Readiness**: 100% ✅
 **Feature Parity with Python ADK**: 100% ✅
 **A2A Interoperability**: 100% ✅
 **MCP Protocol Support**: 100% ✅
+**OpenAPI Toolset**: 100% ✅
 
 See [docs/STATUS.md](docs/STATUS.md) for detailed metrics.
 
@@ -161,6 +164,48 @@ await foreach (var evt in runner.RunAsync("user001", "session001", "List files")
 }
 ```
 
+### OpenAPI Toolset
+
+```csharp
+using NTG.Adk.Implementations.Tools.OpenApi;
+using NTG.Adk.Boundary.Tools.Auth;
+
+// Load OpenAPI spec (JSON or YAML)
+var openApiSpec = File.ReadAllText("petstore-openapi.json");
+
+// Create toolset from spec
+var toolset = new OpenAPIToolset(openApiSpec, "json");
+
+// Optional: Add authentication
+var authScheme = new ApiKeyAuthScheme
+{
+    In = "header",
+    Name = "X-API-Key"
+};
+var authCredential = new ApiKeyCredential
+{
+    ApiKey = Environment.GetEnvironmentVariable("API_KEY")!
+};
+toolset = new OpenAPIToolset(openApiSpec, "json", authScheme, authCredential);
+
+// Get all tools from spec
+var tools = toolset.GetTools();
+
+// Use with agent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ApiAgent",
+    Instruction = "You can interact with the API using these tools",
+    Tools = tools
+};
+
+var runner = new InMemoryRunner(agent, appName: "ApiApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "List all pets"))
+{
+    // Handle events
+}
+```
+
 ## 📚 Documentation
 
 - **[Getting Started Guide](docs/GETTING_STARTED.md)** - Detailed setup and usage
@@ -223,6 +268,7 @@ E:\repos\adk-csharp/
 │   ├── StoryFlowAgent/             # Multi-agent workflow
 │   ├── A2AInteropSample/           # A2A protocol demo
 │   ├── McpToolsSample/             # MCP Protocol integration
+│   ├── OpenApiToolsSample/         # OpenAPI Toolset demo
 │   └── BuiltInToolsSample/         # Built-in tools demo
 ├── docs/                           # Documentation
 └── README.md                       # This file
@@ -239,7 +285,8 @@ Explore working examples in the `samples/` directory:
 5. **StoryFlowAgent** - Sequential story generation workflow
 6. **A2AInteropSample** - A2A protocol interoperability
 7. **McpToolsSample** - MCP Protocol integration (stdio, SSE, HTTP transports)
-8. **BuiltInToolsSample** - Built-in tools (Google Search, Code Execution)
+8. **OpenApiToolsSample** - OpenAPI Toolset with REST API integration
+9. **BuiltInToolsSample** - Built-in tools (Google Search, Code Execution)
 
 Run a sample:
 ```bash
@@ -249,7 +296,7 @@ dotnet run
 
 ## 🔧 Requirements
 
-- **.NET 9.0** or higher
+- **.NET 8.0 LTS** (supported until November 2026)
 - **C# 12** language features
 - **Visual Studio 2022** or **VS Code** with C# Dev Kit
 
