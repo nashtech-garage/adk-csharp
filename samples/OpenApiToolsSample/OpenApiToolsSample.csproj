@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\NTG.Adk.Bootstrap\NTG.Adk.Bootstrap.csproj" />
-    <ProjectReference Include="..\..\src\NTG.Adk.Operators\NTG.Adk.Operators.csproj" />
-    <ProjectReference Include="..\..\src\NTG.Adk.Implementations\NTG.Adk.Implementations.csproj" />
     <ProjectReference Include="..\..\src\NTG.Adk.Boundary\NTG.Adk.Boundary.csproj" />
+    <ProjectReference Include="..\..\src\NTG.Adk.CoreAbstractions\NTG.Adk.CoreAbstractions.csproj" />
+    <ProjectReference Include="..\..\src\NTG.Adk.Implementations\NTG.Adk.Implementations.csproj" />
+    <ProjectReference Include="..\..\src\NTG.Adk.Operators\NTG.Adk.Operators.csproj" />
+    <ProjectReference Include="..\..\src\NTG.Adk.Bootstrap\NTG.Adk.Bootstrap.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
