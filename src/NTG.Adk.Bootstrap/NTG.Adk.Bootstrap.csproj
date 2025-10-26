@@ -27,6 +27,8 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/nashtech-garage/adk-csharp</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/nashtech-garage/adk-csharp</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
