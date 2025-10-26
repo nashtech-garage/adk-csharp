@@ -4,7 +4,7 @@
 [![.NET](https://img.shields.io/badge/.NET-8.0_LTS-512BD4)](https://dotnet.microsoft.com/)
 [![A.D.D V3](https://img.shields.io/badge/Architecture-A.D.D_V3-green)](https://abstractdriven.com)
 
-> **Production-ready C# implementation of Google's Agent Development Kit with 100% Python API compatibility**
+> **Production-ready C# implementation of Google's Agent Development Kit with 99% feature parity**
 
 NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/adk-python), following strict **[Abstract Driven Development (A.D.D) V3](https://abstractdriven.com/llms-full.txt)** architecture principles for enterprise-grade agent systems.
 
@@ -28,7 +28,7 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 **Version**: 1.5.2-alpha
 **Target Framework**: .NET 8.0 LTS (supported until Nov 2026)
 **Production Readiness**: 100% ✅
-**Feature Parity with Python ADK**: 100% ✅
+**Core Feature Parity with Python ADK**: 99% ✅ (Retrieval/RAG: 50%)
 **A2A Interoperability**: 100% ✅
 **MCP Protocol Support**: 100% ✅
 **OpenAPI Toolset**: 100% ✅
@@ -347,7 +347,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
 
 ## 🔗 Python ADK Compatibility
 
-NTG.Adk maintains 100% API compatibility with Google ADK Python:
+NTG.Adk maintains 99% feature parity with Google ADK Python (100% core features):
 
 | Python ADK | C# NTG.Adk | Layer |
 |------------|------------|-------|
