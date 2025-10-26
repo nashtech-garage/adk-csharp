@@ -26,6 +26,18 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>NTG.Adk.Implementations</PackageId>
+    <Version>1.5.4-alpha</Version>
+    <Authors>NTG</Authors>
+    <Company>NTG</Company>
+    <Description>NTG.Adk Implementations - Concrete implementations and adapters (Layer 3 of A.D.D V3 architecture)</Description>
+    <PackageTags>adk;agent;ai;implementations;adapters</PackageTags>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/nashtech-garage/adk-csharp</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/nashtech-garage/adk-csharp</PackageProjectUrl>
   </PropertyGroup>
 
 </Project>
