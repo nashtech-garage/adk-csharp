@@ -269,6 +269,9 @@ internal sealed class FilesRetrievalFunctionDeclarationAdapter : IFunctionDeclar
     public ISchema? Parameters => _dto.Parameters != null
         ? new FilesRetrievalSchemaAdapter(_dto.Parameters)
         : null;
+    public ISchema? Response => _dto.Response != null
+        ? new FilesRetrievalSchemaAdapter(_dto.Response)
+        : null;
 }
 
 internal sealed class FilesRetrievalSchemaAdapter : ISchema
@@ -298,4 +301,12 @@ internal sealed class FilesRetrievalSchemaPropertyAdapter : ISchemaProperty
     public string Type => _dto.Type;
     public string? Description => _dto.Description;
     public IReadOnlyList<string>? Enum => _dto.Enum;
+    public ISchemaProperty? Items => _dto.Items != null ? new FilesRetrievalSchemaPropertyAdapter(_dto.Items) : null;
+
+    public IReadOnlyDictionary<string, ISchemaProperty>? Properties =>
+        _dto.Properties?.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (ISchemaProperty)new FilesRetrievalSchemaPropertyAdapter(kvp.Value));
+
+    public IReadOnlyList<string>? Required => _dto.Required;
 }

@@ -23,6 +23,11 @@ public record FunctionDeclaration
     /// JSON schema describing the parameters
     /// </summary>
     public Schema? Parameters { get; init; }
+
+    /// <summary>
+    /// JSON schema describing the response (Vertex AI only)
+    /// </summary>
+    public Schema? Response { get; init; }
 }
 
 /// <summary>
@@ -77,7 +82,12 @@ public record SchemaProperty
     public SchemaProperty? Items { get; init; }
 
     /// <summary>
-    /// Properties for object types
+    /// Properties for nested object types
     /// </summary>
     public Dictionary<string, SchemaProperty>? Properties { get; init; }
+
+    /// <summary>
+    /// Required property names for nested object types
+    /// </summary>
+    public List<string>? Required { get; init; }
 }

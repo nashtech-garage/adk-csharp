@@ -91,6 +91,7 @@ internal sealed class FunctionDeclarationAdapter : IFunctionDeclaration
     public string Name => _dto.Name;
     public string? Description => _dto.Description;
     public ISchema? Parameters => _dto.Parameters != null ? new SchemaAdapter(_dto.Parameters) : null;
+    public ISchema? Response => _dto.Response != null ? new SchemaAdapter(_dto.Response) : null;
 }
 
 internal sealed class SchemaAdapter : ISchema
@@ -124,4 +125,12 @@ internal sealed class SchemaPropertyAdapter : ISchemaProperty
     public string Type => _dto.Type;
     public string? Description => _dto.Description;
     public IReadOnlyList<string>? Enum => _dto.Enum;
+    public ISchemaProperty? Items => _dto.Items != null ? new SchemaPropertyAdapter(_dto.Items) : null;
+
+    public IReadOnlyDictionary<string, ISchemaProperty>? Properties =>
+        _dto.Properties?.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (ISchemaProperty)new SchemaPropertyAdapter(kvp.Value));
+
+    public IReadOnlyList<string>? Required => _dto.Required;
 }

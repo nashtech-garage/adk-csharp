@@ -20,9 +20,11 @@ public interface ITool
     string? Description { get; }
 
     /// <summary>
-    /// Get the function declaration for this tool (for LLM)
+    /// Get the function declaration for this tool (for LLM).
+    /// Returns null for built-in tools that don't need declaration (e.g., GoogleSearch for Gemini).
+    /// Equivalent to _get_declaration() in Python.
     /// </summary>
-    IFunctionDeclaration GetDeclaration();
+    IFunctionDeclaration? GetDeclaration();
 
     /// <summary>
     /// Execute the tool with given arguments
@@ -45,6 +47,7 @@ public interface IFunctionDeclaration
     string Name { get; }
     string? Description { get; }
     ISchema? Parameters { get; }
+    ISchema? Response { get; }
 }
 
 /// <summary>
@@ -65,6 +68,9 @@ public interface ISchemaProperty
     string Type { get; }
     string? Description { get; }
     IReadOnlyList<string>? Enum { get; }
+    ISchemaProperty? Items { get; }
+    IReadOnlyDictionary<string, ISchemaProperty>? Properties { get; }
+    IReadOnlyList<string>? Required { get; }
 }
 
 /// <summary>

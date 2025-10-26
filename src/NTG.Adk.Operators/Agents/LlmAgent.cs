@@ -109,7 +109,7 @@ public class LlmAgent : BaseAgent
         // 3. Build tool declarations (including AutoFlow transfer tool if enabled)
         var effectiveTools = GetEffectiveTools();
         var toolDeclarations = effectiveTools.Count > 0
-            ? effectiveTools.Select(t => t.GetDeclaration()).ToList()
+            ? effectiveTools.Select(t => t.GetDeclaration()).OfType<IFunctionDeclaration>().ToList()
             : null;
 
         // 4. Create request

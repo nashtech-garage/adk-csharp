@@ -524,6 +524,9 @@ internal sealed class AgenticFilesRetrievalFunctionDeclarationAdapter : IFunctio
     public ISchema? Parameters => _dto.Parameters != null
         ? new AgenticFilesRetrievalSchemaAdapter(_dto.Parameters)
         : null;
+    public ISchema? Response => _dto.Response != null
+        ? new AgenticFilesRetrievalSchemaAdapter(_dto.Response)
+        : null;
 }
 
 internal sealed class AgenticFilesRetrievalSchemaAdapter : ISchema
@@ -553,4 +556,12 @@ internal sealed class AgenticFilesRetrievalSchemaPropertyAdapter : ISchemaProper
     public string Type => _dto.Type;
     public string? Description => _dto.Description;
     public IReadOnlyList<string>? Enum => _dto.Enum;
+    public ISchemaProperty? Items => _dto.Items != null ? new AgenticFilesRetrievalSchemaPropertyAdapter(_dto.Items) : null;
+
+    public IReadOnlyDictionary<string, ISchemaProperty>? Properties =>
+        _dto.Properties?.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (ISchemaProperty)new AgenticFilesRetrievalSchemaPropertyAdapter(kvp.Value));
+
+    public IReadOnlyList<string>? Required => _dto.Required;
 }
