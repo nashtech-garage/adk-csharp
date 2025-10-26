@@ -1,6 +1,7 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.Boundary.Exceptions;
 using NTG.Adk.CoreAbstractions.Agents;
 using NTG.Adk.CoreAbstractions.Artifacts;
 using NTG.Adk.CoreAbstractions.Events;
@@ -24,6 +25,7 @@ public class Runner
     public ISessionService SessionService { get; }
     public IArtifactService? ArtifactService { get; }
     public IMemoryService? MemoryService { get; }
+    public RunConfig RunConfig { get; }
 
     /// <summary>
     /// Create a new Runner instance.
@@ -33,18 +35,21 @@ public class Runner
     /// <param name="sessionService">Session service for state persistence</param>
     /// <param name="artifactService">Optional artifact service for file storage</param>
     /// <param name="memoryService">Optional memory service for long-term memory</param>
+    /// <param name="runConfig">Optional run configuration (defaults to MaxLlmCalls=500)</param>
     public Runner(
         IAgent agent,
         string appName,
         ISessionService sessionService,
         IArtifactService? artifactService = null,
-        IMemoryService? memoryService = null)
+        IMemoryService? memoryService = null,
+        RunConfig? runConfig = null)
     {
         Agent = agent ?? throw new ArgumentNullException(nameof(agent));
         AppName = appName ?? throw new ArgumentNullException(nameof(appName));
         SessionService = sessionService ?? throw new ArgumentNullException(nameof(sessionService));
         ArtifactService = artifactService;
         MemoryService = memoryService;
+        RunConfig = runConfig ?? new RunConfig();
     }
 
     /// <summary>
@@ -90,7 +95,8 @@ public class Runner
             Branch = "main",
             UserInput = userInput,
             ArtifactService = ArtifactService,
-            MemoryService = MemoryService
+            MemoryService = MemoryService,
+            RunConfig = RunConfig
         };
 
         // Run agent and yield events
@@ -152,7 +158,8 @@ public class Runner
             Branch = "main",
             UserInput = userInput,
             ArtifactService = ArtifactService,
-            MemoryService = MemoryService
+            MemoryService = MemoryService,
+            RunConfig = RunConfig
         };
 
         // Continue execution from this point
@@ -171,11 +178,29 @@ public class Runner
 /// </summary>
 internal class InvocationContextImpl : IInvocationContext
 {
+    private int _numberOfLlmCalls = 0;
+
     public required ISession Session { get; init; }
     public required string Branch { get; init; }
     public string? UserInput { get; init; }
     public IArtifactService? ArtifactService { get; init; }
     public IMemoryService? MemoryService { get; init; }
+    public RunConfig? RunConfig { get; init; }
+
+    public int NumberOfLlmCalls => _numberOfLlmCalls;
+
+    public void IncrementAndEnforceLlmCallsLimit()
+    {
+        _numberOfLlmCalls++;
+
+        if (RunConfig != null
+            && RunConfig.MaxLlmCalls > 0
+            && _numberOfLlmCalls > RunConfig.MaxLlmCalls)
+        {
+            throw new LlmCallsLimitExceededError(
+                $"Max number of LLM calls limit of {RunConfig.MaxLlmCalls} exceeded");
+        }
+    }
 
     public IInvocationContext WithBranch(string newBranch)
     {
@@ -185,7 +210,9 @@ internal class InvocationContextImpl : IInvocationContext
             Branch = newBranch,
             UserInput = UserInput,
             ArtifactService = ArtifactService,
-            MemoryService = MemoryService
+            MemoryService = MemoryService,
+            RunConfig = RunConfig,
+            _numberOfLlmCalls = _numberOfLlmCalls
         };
     }
 
@@ -197,7 +224,9 @@ internal class InvocationContextImpl : IInvocationContext
             Branch = Branch,
             UserInput = newUserInput,
             ArtifactService = ArtifactService,
-            MemoryService = MemoryService
+            MemoryService = MemoryService,
+            RunConfig = RunConfig,
+            _numberOfLlmCalls = _numberOfLlmCalls
         };
     }
 }

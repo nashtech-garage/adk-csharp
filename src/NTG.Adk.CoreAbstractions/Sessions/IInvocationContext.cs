@@ -1,6 +1,7 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.CoreAbstractions.Agents;
 using NTG.Adk.CoreAbstractions.Artifacts;
 using NTG.Adk.CoreAbstractions.Memory;
 
@@ -37,6 +38,22 @@ public interface IInvocationContext
     /// Memory service for long-term agent memory
     /// </summary>
     IMemoryService? MemoryService { get; }
+
+    /// <summary>
+    /// Configuration for agent execution (includes MaxLlmCalls limit)
+    /// </summary>
+    RunConfig? RunConfig { get; }
+
+    /// <summary>
+    /// Number of LLM calls made in this invocation
+    /// </summary>
+    int NumberOfLlmCalls { get; }
+
+    /// <summary>
+    /// Increment LLM call counter and enforce limit.
+    /// Throws LlmCallsLimitExceededError if limit exceeded.
+    /// </summary>
+    void IncrementAndEnforceLlmCallsLimit();
 
     /// <summary>
     /// Create a new context with a different branch

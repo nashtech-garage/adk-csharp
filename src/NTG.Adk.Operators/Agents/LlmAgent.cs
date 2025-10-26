@@ -128,13 +128,13 @@ public class LlmAgent : BaseAgent
 
         // 5. Call LLM (streaming or non-streaming based on EnableStreaming)
         // Multi-turn loop: continue calling LLM until no more tool calls
-        var maxTurns = 20; // Prevent infinite loops
-        var turnCount = 0;
+        // Limit enforced by RunConfig.MaxLlmCalls (default: 500, matches Python ADK)
         var continueProcessing = true;
 
-        while (continueProcessing && turnCount < maxTurns)
+        while (continueProcessing)
         {
-            turnCount++;
+            // Increment and enforce LLM call limit (throws if exceeded)
+            context.IncrementAndEnforceLlmCallsLimit();
 
             if (EnableStreaming)
             {
