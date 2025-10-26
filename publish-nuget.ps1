@@ -1,10 +1,25 @@
 #!/usr/bin/env pwsh
-# NuGet Package Publishing Script for NTG.Adk v1.4.0-alpha
+# NuGet Package Publishing Script for NTG.Adk
 # Copyright 2025 NTG - Licensed under Apache License, Version 2.0
+
+# Read version from .csproj file
+$csprojPath = ".\src\NTG.Adk.Bootstrap\NTG.Adk.Bootstrap.csproj"
+if (-not (Test-Path $csprojPath)) {
+    Write-Host "ERROR: Could not find $csprojPath" -ForegroundColor Red
+    exit 1
+}
+
+[xml]$csprojXml = Get-Content $csprojPath
+$version = $csprojXml.Project.PropertyGroup.Version | Where-Object { $_ -ne $null } | Select-Object -First 1
+
+if ([string]::IsNullOrWhiteSpace($version)) {
+    Write-Host "ERROR: Could not extract version from $csprojPath" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  NTG.Adk NuGet Package Publisher" -ForegroundColor Cyan
-Write-Host "  Version: 1.4.0-alpha" -ForegroundColor Cyan
+Write-Host "  Version: $version" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -40,9 +55,9 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  ✓ Build succeeded" -ForegroundColor Green
 Write-Host ""
 
-# Step 4: Pack NuGet packages
-Write-Host "Step 4: Packing NuGet packages..." -ForegroundColor Cyan
-$packOutput = dotnet pack --configuration Release --output .\nupkgs --nologo 2>&1
+# Step 4: Pack NuGet package (Bootstrap only)
+Write-Host "Step 4: Packing NuGet package (NTG.Adk)..." -ForegroundColor Cyan
+$packOutput = dotnet pack $csprojPath --configuration Release --output .\nupkgs --nologo 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "  ✗ Pack FAILED!" -ForegroundColor Red
     Write-Host $packOutput -ForegroundColor Red
@@ -51,16 +66,16 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  ✓ Packages packed successfully" -ForegroundColor Green
 Write-Host ""
 
-# Step 5: List packages to be published
-Write-Host "Step 5: Verifying packages..." -ForegroundColor Cyan
-$packages = Get-ChildItem ".\nupkgs\NTG.Adk*.nupkg" | Select-Object -ExpandProperty Name | Sort-Object
+# Step 5: Verify package
+Write-Host "Step 5: Verifying package..." -ForegroundColor Cyan
+$packages = Get-ChildItem ".\nupkgs\NTG.Adk.$version.nupkg" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
 
 if ($packages.Count -eq 0) {
-    Write-Host "  ✗ ERROR: No NTG.Adk packages found!" -ForegroundColor Red
+    Write-Host "  ✗ ERROR: NTG.Adk package not found!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "  Found $($packages.Count) package(s) to publish:" -ForegroundColor Green
+Write-Host "  Found package to publish:" -ForegroundColor Green
 foreach ($pkg in $packages) {
     $pkgPath = ".\nupkgs\$pkg"
     if (Test-Path $pkgPath) {
@@ -94,7 +109,7 @@ Write-Host "API Key received (length: $($apiKeyPlainText.Length) characters)" -F
 Write-Host ""
 
 # Confirmation
-Write-Host "WARNING: This will publish $($packages.Count) packages to NuGet.org" -ForegroundColor Yellow
+Write-Host "WARNING: This will publish NTG.Adk $version to NuGet.org" -ForegroundColor Yellow
 Write-Host "Target: https://api.nuget.org/v3/index.json" -ForegroundColor Yellow
 Write-Host ""
 $confirmation = Read-Host "Are you sure you want to continue? (yes/no)"
@@ -162,42 +177,19 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Publication Summary" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Total Packages: $($packages.Count)" -ForegroundColor White
-Write-Host "Successful: $successCount" -ForegroundColor Green
-Write-Host "Failed: $failCount" -ForegroundColor $(if ($failCount -gt 0) { "Red" } else { "White" })
-Write-Host ""
 
-if ($publishedPackages.Count -gt 0) {
-    Write-Host "Published packages:" -ForegroundColor Green
-    foreach ($pkg in $publishedPackages) {
-        Write-Host "  ✓ $pkg" -ForegroundColor White
-    }
-    Write-Host ""
-}
-
-if ($failedPackages.Count -gt 0) {
-    Write-Host "Failed packages:" -ForegroundColor Red
-    foreach ($pkg in $failedPackages) {
-        Write-Host "  ✗ $pkg" -ForegroundColor White
-    }
-    Write-Host ""
-}
-
-if ($successCount -eq $packages.Count) {
-    Write-Host "🎉 All packages published successfully!" -ForegroundColor Green
+if ($successCount -eq 1) {
+    Write-Host "🎉 Package published successfully!" -ForegroundColor Green
     Write-Host ""
     Write-Host "View your packages at:" -ForegroundColor Cyan
     Write-Host "  https://www.nuget.org/packages/NTG.Adk/" -ForegroundColor White
     Write-Host ""
     Write-Host "Install with:" -ForegroundColor Cyan
-    Write-Host "  dotnet add package NTG.Adk --version 1.4.0-alpha" -ForegroundColor White
+    Write-Host "  dotnet add package NTG.Adk --version $version" -ForegroundColor White
     Write-Host ""
     exit 0
-} elseif ($failCount -gt 0) {
-    Write-Host "⚠️  Some packages failed to publish." -ForegroundColor Yellow
-    Write-Host "Please check the errors above and try again." -ForegroundColor Yellow
-    exit 1
 } else {
-    Write-Host "✓ Publication completed." -ForegroundColor Green
-    exit 0
+    Write-Host "❌ Package failed to publish." -ForegroundColor Red
+    Write-Host "Please check the errors above and try again." -ForegroundColor Red
+    exit 1
 }

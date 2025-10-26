@@ -26,21 +26,6 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
-    <!-- NuGet Package Metadata -->
-    <PackageId>NTG.Adk.Implementations</PackageId>
-    <Version>1.4.0-alpha</Version>
-    <Authors>NTG</Authors>
-    <Company>NTG</Company>
-    <Description>Implementations and adapters for NTG Agent Development Kit - includes LLM adapters (Gemini, OpenAI), MCP, OpenAPI, and storage services - A.D.D V3 architecture Layer 3</Description>
-    <PackageTags>adk;agent;ai;llm;google-adk;implementations;gemini;openai;mcp;openapi</PackageTags>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
 
 </Project>
