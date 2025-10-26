@@ -43,6 +43,12 @@ public class LlmAgent : BaseAgent
     public bool EnableAutoFlow { get; init; } = true;
 
     /// <summary>
+    /// Whether to enable streaming responses (real-time token-by-token output).
+    /// Default: true
+    /// </summary>
+    public bool EnableStreaming { get; init; } = true;
+
+    /// <summary>
     /// Callbacks for agent lifecycle hooks
     /// </summary>
     public IAgentCallbacks? Callbacks { get; init; }
@@ -120,63 +126,190 @@ public class LlmAgent : BaseAgent
             Tools = toolDeclarations
         };
 
-        // 5. Call LLM
-        var response = await _llm.GenerateAsync(request, cancellationToken);
+        // 5. Call LLM (streaming or non-streaming based on EnableStreaming)
+        // Multi-turn loop: continue calling LLM until no more tool calls
+        var maxTurns = 20; // Prevent infinite loops
+        var turnCount = 0;
+        var continueProcessing = true;
 
-        // 6. Process response
-        string? finalText = null;
-
-        // Check if response has function calls (tools)
-        if (response.FunctionCalls?.Count > 0)
+        while (continueProcessing && turnCount < maxTurns)
         {
-            // Execute tools
-            foreach (var functionCall in response.FunctionCalls)
+            turnCount++;
+
+            if (EnableStreaming)
             {
-                yield return CreateFunctionCallEvent(functionCall);
+                // Streaming mode: yield text chunks in real-time
+                var finalText = new System.Text.StringBuilder();
+                var hasFunctionCalls = false;
+                var functionCalls = new List<IFunctionCall>();
+                IContent? assistantContent = null;
 
-                // Execute tool
-                var tool = Tools?.FirstOrDefault(t => t.Name == functionCall.Name);
-                if (tool != null)
+                await foreach (var response in _llm.GenerateStreamAsync(request, cancellationToken))
                 {
-                    var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);
+                    // 6. Process streaming response
 
-                    // Create event with actions from tool
-                    var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, toolActions);
-
-                    yield return responseEvent;
-
-                    // If transfer_to_agent was called, stop processing and let parent handle transfer
-                    if (!string.IsNullOrEmpty(toolActions.TransferToAgent))
+                    // Check if response has function calls (tools)
+                    if (response.FunctionCalls?.Count > 0)
                     {
-                        yield break; // Stop current agent execution
+                        hasFunctionCalls = true;
+
+                        // Collect function calls
+                        foreach (var fc in response.FunctionCalls)
+                        {
+                            if (!functionCalls.Any(existing => existing.Id == fc.Id))
+                            {
+                                functionCalls.Add(fc);
+                            }
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(response.Text))
+                    {
+                        // Stream text chunks in real-time
+                        finalText.Append(response.Text);
+
+                        // Yield streaming event immediately
+                        var streamEvent = new Event
+                        {
+                            Author = Name,
+                            Content = Boundary.Events.Content.FromText(response.Text, "model")
+                        };
+
+                        yield return CreateEvent(streamEvent);
                     }
 
-                    // TODO: Send tool result back to LLM for continued processing
+                    // Capture assistant content for history
+                    if (response.Content != null)
+                    {
+                        assistantContent = response.Content;
+                    }
+                }
+
+                // 7. Process function calls after streaming completes
+                if (hasFunctionCalls)
+                {
+                    // Execute tools
+                    foreach (var functionCall in functionCalls)
+                    {
+                        yield return CreateFunctionCallEvent(functionCall);
+
+                        // Execute tool
+                        var tool = Tools?.FirstOrDefault(t => t.Name == functionCall.Name);
+                        if (tool != null)
+                        {
+                            var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);
+
+                            // Create event with actions from tool
+                            var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, toolActions);
+
+                            yield return responseEvent;
+
+                            // If transfer_to_agent was called, stop processing and let parent handle transfer
+                            if (!string.IsNullOrEmpty(toolActions.TransferToAgent))
+                            {
+                                yield break; // Stop current agent execution
+                            }
+                        }
+                    }
+
+                    // Rebuild contents from session events for next turn
+                    contents = BuildContentsFromEvents(context);
+                    request = new LlmRequestImpl
+                    {
+                        SystemInstruction = processedInstruction,
+                        Contents = contents,
+                        Tools = toolDeclarations
+                    };
+
+                    // Continue to next turn
+                    continueProcessing = true;
+                }
+                else
+                {
+                    // No more tool calls - final text response
+                    var finalTextStr = finalText.ToString();
+                    if (OutputKey != null && !string.IsNullOrEmpty(finalTextStr))
+                    {
+                        context.Session.State.Set(OutputKey, finalTextStr);
+                    }
+
+                    // Stop processing
+                    continueProcessing = false;
+                }
+            }
+            else
+            {
+                // Non-streaming mode: single response
+                var response = await _llm.GenerateAsync(request, cancellationToken);
+
+                // 6. Process response
+                string? finalText = null;
+
+                // Check if response has function calls (tools)
+                if (response.FunctionCalls?.Count > 0)
+                {
+                    // Execute tools
+                    foreach (var functionCall in response.FunctionCalls)
+                    {
+                        yield return CreateFunctionCallEvent(functionCall);
+
+                        // Execute tool
+                        var tool = Tools?.FirstOrDefault(t => t.Name == functionCall.Name);
+                        if (tool != null)
+                        {
+                            var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);
+
+                            // Create event with actions from tool
+                            var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, toolActions);
+
+                            yield return responseEvent;
+
+                            // If transfer_to_agent was called, stop processing and let parent handle transfer
+                            if (!string.IsNullOrEmpty(toolActions.TransferToAgent))
+                            {
+                                yield break; // Stop current agent execution
+                            }
+                        }
+                    }
+
+                    // Rebuild contents from session events for next turn
+                    contents = BuildContentsFromEvents(context);
+                    request = new LlmRequestImpl
+                    {
+                        SystemInstruction = processedInstruction,
+                        Contents = contents,
+                        Tools = toolDeclarations
+                    };
+
+                    // Continue to next turn
+                    continueProcessing = true;
+                }
+                else
+                {
+                    // Regular text response - final turn
+                    finalText = response.Text;
+
+                    // 7. Save to output_key if specified
+                    if (OutputKey != null && finalText != null)
+                    {
+                        context.Session.State.Set(OutputKey, finalText);
+                    }
+
+                    // 8. Yield final event
+                    var evt = new Event
+                    {
+                        Author = Name,
+                        Content = response.Content != null
+                            ? ConvertToDto(response.Content)
+                            : Boundary.Events.Content.FromText(finalText ?? "", "model")
+                    };
+
+                    yield return CreateEvent(evt);
+
+                    // Stop processing
+                    continueProcessing = false;
                 }
             }
         }
-        else
-        {
-            // Regular text response
-            finalText = response.Text;
-        }
-
-        // 7. Save to output_key if specified
-        if (OutputKey != null && finalText != null)
-        {
-            context.Session.State.Set(OutputKey, finalText);
-        }
-
-        // 8. Yield final event
-        var evt = new Event
-        {
-            Author = Name,
-            Content = response.Content != null
-                ? ConvertToDto(response.Content)
-                : Boundary.Events.Content.FromText(finalText ?? "", "model")
-        };
-
-        yield return CreateEvent(evt);
     }
 
     /// <summary>
@@ -208,7 +341,8 @@ public class LlmAgent : BaseAgent
                 $"Use {{var?}} for optional variables.");
         });
 
-        // TODO: Handle {artifact.var} for artifact references
+        // Note: {artifact.var} syntax for artifact references not yet implemented
+        // Artifact service integration pending
 
         return result;
     }
@@ -230,6 +364,35 @@ public class LlmAgent : BaseAgent
         return contents;
     }
 
+    /// <summary>
+    /// Build contents from session events (for multi-turn tool execution)
+    /// </summary>
+    private List<IContent> BuildContentsFromEvents(IInvocationContext context)
+    {
+        var contents = new List<IContent>();
+
+        // Add initial user input
+        if (context.UserInput != null)
+        {
+            contents.Add(new SimpleContent
+            {
+                Role = "user",
+                Parts = [new SimplePart { Text = context.UserInput }]
+            });
+        }
+
+        // Add all events from session (includes assistant responses and tool results)
+        foreach (var evt in context.Session.Events)
+        {
+            if (evt.Content != null)
+            {
+                contents.Add(evt.Content);
+            }
+        }
+
+        return contents;
+    }
+
     private async Task<(object result, IToolActions actions)> ExecuteToolAsync(
         ITool tool,
         IFunctionCall functionCall,
@@ -240,7 +403,7 @@ public class LlmAgent : BaseAgent
         var toolContext = new ToolContextImpl
         {
             State = context.Session.State,
-            User = null, // TODO: Get from context
+            User = null, // User context not available in current IInvocationContext
             Actions = toolActions
         };
 
@@ -320,7 +483,24 @@ public class LlmAgent : BaseAgent
         var parts = content.Parts.Select(p => new Part
         {
             Text = p.Text,
-            // TODO: Convert other part types
+            FunctionCall = p.FunctionCall != null
+                ? new Boundary.Events.FunctionCall
+                {
+                    Name = p.FunctionCall.Name,
+                    Args = p.FunctionCall.Args != null
+                        ? new Dictionary<string, object>(p.FunctionCall.Args)
+                        : null,
+                    Id = p.FunctionCall.Id
+                }
+                : null,
+            FunctionResponse = p.FunctionResponse != null
+                ? new Boundary.Events.FunctionResponse
+                {
+                    Name = p.FunctionResponse.Name,
+                    Response = p.FunctionResponse.Response,
+                    Id = p.FunctionResponse.Id
+                }
+                : null
         }).ToList();
 
         return new Boundary.Events.Content

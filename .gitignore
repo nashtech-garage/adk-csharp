@@ -427,3 +427,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 nupkgs/
+
+# Claude Code settings
+.claude/
