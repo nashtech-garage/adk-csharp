@@ -18,7 +18,7 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 - 🔌 **MCP Protocol** - Connect to MCP servers and use their tools (stdio, SSE, HTTP)
 - 🌐 **OpenAPI Toolset** - Auto-generate tools from any REST API (JSON/YAML specs)
 - 🚀 **Runner Pattern** - Production-ready orchestration with integrated services
-- 🧩 **LLM Adapters** - Gemini and OpenAI production integrations
+- 🧩 **LLM Adapters** - Gemini, OpenAI, and OpenAI-compatible endpoints (Ollama, LocalAI, vLLM)
 - 🛠️ **Tool Ecosystem** - Function calling, custom tools, and built-in tools (Google Search, Code Execution)
 
 ## 📊 Status
@@ -65,6 +65,35 @@ await foreach (var evt in runner.RunAsync("user001", "session001", "Hello!"))
     }
 }
 ```
+
+### OpenAI-Compatible Endpoints (Ollama, LocalAI, vLLM)
+
+```csharp
+using NTG.Adk.Implementations.Models;
+using NTG.Adk.Operators.Agents;
+using NTG.Adk.Operators.Runners;
+
+// Use Ollama local models
+var llm = new OpenAILlm(
+    modelName: "llama3",
+    apiKey: "ollama",  // Any string works
+    endpoint: new Uri("http://localhost:11434/v1")
+);
+
+var agent = new LlmAgent(llm, "llama3")
+{
+    Name = "LocalAssistant",
+    Instruction = "You are a helpful assistant running locally"
+};
+
+var runner = new InMemoryRunner(agent, appName: "LocalApp");
+await foreach (var evt in runner.RunAsync("user001", "session001", "Hello!"))
+{
+    // Handle events
+}
+```
+
+Supports: **Ollama**, **LocalAI**, **vLLM**, **LM Studio**, and any OpenAI-compatible endpoint.
 
 ### Multi-Agent Workflow
 

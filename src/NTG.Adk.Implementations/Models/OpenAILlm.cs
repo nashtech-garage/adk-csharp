@@ -3,6 +3,7 @@
 
 using OpenAI;
 using OpenAI.Chat;
+using System.ClientModel;
 using NTG.Adk.CoreAbstractions.Events;
 using NTG.Adk.CoreAbstractions.Models;
 using NTG.Adk.Implementations.Events;
@@ -27,6 +28,23 @@ public class OpenAILlm : ILlm
     {
         ModelName = modelName;
         var openAIClient = new OpenAIClient(apiKey);
+        _client = openAIClient.GetChatClient(modelName);
+    }
+
+    /// <summary>
+    /// Create OpenAILlm with custom endpoint (for Ollama, LocalAI, vLLM, etc.)
+    /// </summary>
+    /// <param name="modelName">Model name (e.g., "llama3", "mistral")</param>
+    /// <param name="apiKey">API key (use "ollama" or any string for Ollama)</param>
+    /// <param name="endpoint">Custom endpoint URL (e.g., "http://localhost:11434/v1")</param>
+    public OpenAILlm(string modelName, string apiKey, Uri endpoint)
+    {
+        ModelName = modelName;
+        var options = new OpenAIClientOptions
+        {
+            Endpoint = endpoint
+        };
+        var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), options);
         _client = openAIClient.GetChatClient(modelName);
     }
 
