@@ -1179,6 +1179,7 @@ public interface IEvent
     string? Author { get; }           // Agent name
     IContent? Content { get; }        // Message content
     IEventActions? Actions { get; }   // Transfer/escalation actions
+    bool Partial { get; }             // True for streaming chunks (matches Python ADK)
 }
 
 public interface IContent
@@ -1202,6 +1203,14 @@ public interface IPart
 ```csharp
 await foreach (var evt in agent.RunAsync(context))
 {
+    // Check if this is a partial streaming chunk (matches Python ADK)
+    if (evt.Partial)
+    {
+        // This is a streaming chunk - process immediately
+        Console.Write(evt.Content?.Parts?.FirstOrDefault()?.Text ?? "");
+        continue;
+    }
+
     // Text response
     if (evt.Content?.Parts != null)
     {
@@ -1313,6 +1322,68 @@ var pipeline = new SequentialAgent("Pipeline", new[] { agent1, agent2 });
 CONFIGURATION & GENERATION CONFIG
 ================================================================================
 
+--- RunConfig (Execution Configuration) ---
+
+Configure agent execution behavior (matches Python ADK):
+
+```csharp
+using NTG.Adk.CoreAbstractions.Agents;
+
+// Default configuration
+var runConfig = new RunConfig
+{
+    MaxLlmCalls = 500,            // Max LLM calls per invocation (default: 500)
+    StreamingMode = StreamingMode.None  // Streaming mode (default: None)
+};
+
+// Create runner with custom config
+var runner = new Runner(
+    agent: myAgent,
+    appName: "MyApp",
+    sessionService: sessionService,
+    runConfig: runConfig
+);
+
+// MaxLlmCalls options:
+// - > 0: Enforces limit (throws LlmCallsLimitExceededError if exceeded)
+// - <= 0: Unbounded (no limit)
+
+// StreamingMode options:
+// - StreamingMode.None: No streaming - buffer complete response (default, matches Python)
+// - StreamingMode.Sse: Server-sent events - token-by-token streaming
+// - StreamingMode.Bidi: Bidirectional streaming (reserved for future)
+```
+
+--- Streaming Configuration ---
+
+Enable token-by-token streaming (matches Python ADK):
+
+```csharp
+// Enable streaming via RunConfig
+var runConfig = new RunConfig
+{
+    StreamingMode = StreamingMode.Sse  // Enable SSE streaming
+};
+
+var runner = new Runner(agent, "MyApp", sessionService, runConfig: runConfig);
+
+await foreach (var evt in runner.RunAsync("user001", "session001", "Hello"))
+{
+    if (evt.Partial)
+    {
+        // Streaming chunk - arrives in real-time
+        Console.Write(evt.Content?.Parts?.FirstOrDefault()?.Text ?? "");
+    }
+    else
+    {
+        // Complete response
+        Console.WriteLine("\n[Final response received]");
+    }
+}
+```
+
+**Important:** Default is `StreamingMode.None` (no streaming) matching Python ADK behavior.
+
 Control LLM behavior with generation parameters.
 
 --- Gemini Generation Config ---
@@ -1343,7 +1414,7 @@ ERROR HANDLING
 ================================================================================
 
 ```csharp
-using NTG.Adk.CoreAbstractions.Exceptions;
+using NTG.Adk.Boundary.Exceptions;
 
 try
 {
@@ -1351,6 +1422,13 @@ try
     {
         // Process events
     }
+}
+catch (LlmCallsLimitExceededError ex)
+{
+    // Max LLM calls exceeded (matches Python ADK)
+    // Thrown when RunConfig.MaxLlmCalls limit is reached
+    Console.WriteLine($"LLM calls limit exceeded: {ex.Message}");
+    // Default limit: 500 calls per invocation
 }
 catch (AgentException ex)
 {
@@ -1373,6 +1451,37 @@ catch (Exception ex)
     Console.WriteLine($"Unexpected error: {ex.Message}");
 }
 ```
+
+--- LlmCallsLimitExceededError Details ---
+
+Thrown when the max LLM calls limit is exceeded (matches Python ADK):
+
+```csharp
+// Configure limit
+var runConfig = new RunConfig
+{
+    MaxLlmCalls = 100  // Limit to 100 LLM calls
+};
+
+var runner = new Runner(agent, "MyApp", sessionService, runConfig: runConfig);
+
+try
+{
+    await foreach (var evt in runner.RunAsync("user001", "session001", "Complex task"))
+    {
+        // Process events
+    }
+}
+catch (LlmCallsLimitExceededError ex)
+{
+    // Limit exceeded - prevents infinite loops with tool calling
+    Console.WriteLine(ex.Message);
+    // Output: "Max number of LLM calls limit of 100 exceeded"
+}
+```
+
+**Default:** 500 calls per invocation (matches Python ADK)
+**Per-invocation:** Counter resets for each new user message
 
 ================================================================================
 BEST PRACTICES
@@ -1403,10 +1512,11 @@ BEST PRACTICES
    - Log errors for debugging
 
 5. Performance
-   - Use streaming for long responses
+   - Enable streaming for long responses (StreamingMode.Sse)
+   - Configure MaxLlmCalls to prevent infinite loops (default: 500)
    - Implement caching for repeated queries
-   - Limit max iterations for LoopAgent
    - Use ParallelAgent for independent tasks
+   - Monitor evt.Partial flag for streaming chunks
 
 6. Security
    - Store API keys in environment variables
