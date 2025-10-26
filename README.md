@@ -14,6 +14,8 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 - 🤖 **Multi-Agent Orchestration** - Sequential, parallel, and loop workflows
 - 🔄 **Session Management** - Multi-user with app/user/session state hierarchy
 - 💾 **Artifact & Memory Services** - File storage and long-term agent memory
+- ⚙️ **RunConfig** - Configurable limits and streaming (MaxLlmCalls: 500, StreamingMode)
+- 📡 **Token Streaming** - Real-time SSE streaming with partial event detection
 - 🌐 **A2A Protocol** - Seamless interoperability with Google Agent ecosystem
 - 🔌 **MCP Protocol** - Connect to MCP servers and use their tools (stdio, SSE, HTTP)
 - 🌐 **OpenAPI Toolset** - Auto-generate tools from any REST API (JSON/YAML specs)
@@ -234,6 +236,84 @@ await foreach (var evt in runner.RunAsync("user001", "session001", "List all pet
     // Handle events
 }
 ```
+
+## ⚙️ Advanced Configuration
+
+### RunConfig - Execution Control
+
+Configure agent execution limits and streaming (matches Python ADK):
+
+```csharp
+using NTG.Adk.CoreAbstractions.Agents;
+
+// Default configuration (matches Python ADK defaults)
+var runConfig = new RunConfig
+{
+    MaxLlmCalls = 500,                  // Max LLM calls per invocation (prevents infinite loops)
+    StreamingMode = StreamingMode.None  // No streaming by default
+};
+
+var runner = new Runner(agent, "MyApp", sessionService, runConfig: runConfig);
+```
+
+### Token Streaming
+
+Enable real-time token-by-token streaming:
+
+```csharp
+// Enable SSE streaming
+var runConfig = new RunConfig
+{
+    StreamingMode = StreamingMode.Sse  // Server-sent events streaming
+};
+
+var runner = new Runner(agent, "MyApp", sessionService, runConfig: runConfig);
+
+await foreach (var evt in runner.RunAsync("user001", "session001", "Hello"))
+{
+    if (evt.Partial)
+    {
+        // Streaming chunk - arrives in real-time as tokens are generated
+        Console.Write(evt.Content?.Parts?.FirstOrDefault()?.Text ?? "");
+    }
+    else
+    {
+        // Complete response
+        Console.WriteLine("\n[Complete]");
+    }
+}
+```
+
+**Streaming Modes:**
+- `StreamingMode.None` - Buffer complete response (default, matches Python ADK)
+- `StreamingMode.Sse` - Server-sent events, token-by-token streaming
+- `StreamingMode.Bidi` - Bidirectional streaming (reserved for future use)
+
+### LLM Call Limits
+
+Prevent infinite loops with configurable limits:
+
+```csharp
+var runConfig = new RunConfig
+{
+    MaxLlmCalls = 100  // Custom limit
+};
+
+try
+{
+    await foreach (var evt in runner.RunAsync("user001", "session001", "Complex task"))
+    {
+        // Process events
+    }
+}
+catch (LlmCallsLimitExceededError ex)
+{
+    Console.WriteLine($"Limit exceeded: {ex.Message}");
+    // Output: "Max number of LLM calls limit of 100 exceeded"
+}
+```
+
+**Default:** 500 calls per invocation (matches Python ADK)
 
 ## 📚 Documentation
 
