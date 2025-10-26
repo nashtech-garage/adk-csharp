@@ -43,12 +43,6 @@ public class LlmAgent : BaseAgent
     public bool EnableAutoFlow { get; init; } = true;
 
     /// <summary>
-    /// Whether to enable streaming responses (real-time token-by-token output).
-    /// Default: true
-    /// </summary>
-    public bool EnableStreaming { get; init; } = true;
-
-    /// <summary>
     /// Callbacks for agent lifecycle hooks
     /// </summary>
     public IAgentCallbacks? Callbacks { get; init; }
@@ -126,17 +120,18 @@ public class LlmAgent : BaseAgent
             Tools = toolDeclarations
         };
 
-        // 5. Call LLM (streaming or non-streaming based on EnableStreaming)
+        // 5. Call LLM (streaming or non-streaming based on RunConfig.StreamingMode)
         // Multi-turn loop: continue calling LLM until no more tool calls
         // Limit enforced by RunConfig.MaxLlmCalls (default: 500, matches Python ADK)
         var continueProcessing = true;
+        var streamingMode = context.RunConfig?.StreamingMode ?? StreamingMode.None;
 
         while (continueProcessing)
         {
             // Increment and enforce LLM call limit (throws if exceeded)
             context.IncrementAndEnforceLlmCallsLimit();
 
-            if (EnableStreaming)
+            if (streamingMode == StreamingMode.Sse)
             {
                 // Streaming mode: yield text chunks in real-time
                 var finalText = new System.Text.StringBuilder();
@@ -167,11 +162,12 @@ public class LlmAgent : BaseAgent
                         // Stream text chunks in real-time
                         finalText.Append(response.Text);
 
-                        // Yield streaming event immediately
+                        // Yield streaming event immediately with Partial=true
                         var streamEvent = new Event
                         {
                             Author = Name,
-                            Content = Boundary.Events.Content.FromText(response.Text, "model")
+                            Content = Boundary.Events.Content.FromText(response.Text, "model"),
+                            Partial = true  // Mark as partial streaming chunk
                         };
 
                         yield return CreateEvent(streamEvent);

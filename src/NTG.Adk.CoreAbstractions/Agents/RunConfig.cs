@@ -18,4 +18,15 @@ public class RunConfig
     ///   - Less than or equal to 0: Allows unbounded LLM calls
     /// </summary>
     public int MaxLlmCalls { get; set; } = 500;
+
+    /// <summary>
+    /// Streaming mode for LLM responses.
+    /// Default: StreamingMode.None (matches Python ADK - no streaming by default)
+    ///
+    /// Modes:
+    ///   - None: Buffer complete response before returning
+    ///   - Sse: Server-sent events - one-way token-by-token streaming
+    ///   - Bidi: Bidirectional streaming
+    /// </summary>
+    public StreamingMode StreamingMode { get; set; } = StreamingMode.None;
 }
