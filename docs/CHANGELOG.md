@@ -2,6 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.6-alpha] - 2025-10-28
+
+### 🐛 **BUG FIX + EXTENSIBILITY ENHANCEMENTS**
+
+This release fixes a critical bug in AutoFlow agent delegation and adds powerful extensibility patterns for runtime tool injection and request transformation.
+
+#### Critical Bug Fix ✅
+
+- **Fixed LlmAgent tool execution** - `transfer_to_agent` tool now works correctly
+  - Bug: Tool execution searched in `Tools` property instead of `effectiveTools` local variable
+  - Impact: AutoFlow delegation failed because LLM could see `transfer_to_agent` but execution couldn't find it
+  - Fix: Changed lines 192 and 252 to use `effectiveTools.FirstOrDefault()` instead of `Tools?.FirstOrDefault()`
+  - Status: AutoFlow multi-agent delegation now fully functional
+
+#### Extensibility Patterns (NEW!) ✅
+
+- **IToolProvider** - Context-aware dynamic tool injection
+  - Port interface in CoreAbstractions for runtime tool provisioning
+  - Enables role-based tools (admin-only), time-based tools (day/night mode), state-dependent tools
+  - LlmAgent.ToolProviders property accepts list of providers
+  - Executed at runtime during GetEffectiveTools()
+
+- **IRequestProcessor** - LLM request transformation pipeline
+  - Port interface in CoreAbstractions for request modification before LLM calls
+  - Supports system instruction modification, tool filtering, conversation history truncation
+  - Priority-based execution (lower number runs first)
+  - Functional design - returns new ILlmRequest (immutable pattern)
+  - LlmAgent.RequestProcessors property accepts processor chain
+
+- **LlmRequestBuilder** - Helper for creating modified requests
+  - Extension methods: WithTools(), WithAppendedInstruction()
+  - Simplifies IRequestProcessor implementations
+  - Maintains immutability - returns new request instances
+
+#### Files Modified
+
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs`
+  - Fixed tool execution bug (lines 192, 252)
+  - Added ToolProviders and RequestProcessors properties
+  - Modified GetEffectiveTools to accept IInvocationContext parameter
+  - Added request processor execution loop
+
+#### Files Added
+
+- `src/NTG.Adk.CoreAbstractions/Tools/IToolProvider.cs`
+- `src/NTG.Adk.CoreAbstractions/Models/IRequestProcessor.cs`
+- `src/NTG.Adk.Operators/Agents/LlmRequestBuilder.cs`
+
+#### Documentation Updated
+
+- `llms-full.txt` - Added "DYNAMIC EXTENSIBILITY" section with comprehensive examples
+- All version references updated to 1.5.6-alpha
+- Updated dates in README.md, FEATURES.md, STATUS.md, COMPATIBILITY.md
+
+#### Architecture Compliance
+
+- ✅ **100% A.D.D V3 Compliant** - All new interfaces in CoreAbstractions (Ports)
+- ✅ **Functional patterns** - IRequestProcessor returns new instances (immutable)
+- ✅ **Zero coupling** - Clean layer boundaries maintained
+
+#### Statistics
+
+- **Build**: 0 errors, 0 warnings (Clean build maintained)
+- **New Ports**: 2 (IToolProvider, IRequestProcessor)
+- **New Helpers**: 1 (LlmRequestBuilder)
+- **Lines Added**: ~200 lines (interfaces + documentation)
+
 ## [1.2.0-alpha] - 2025-10-25
 
 ### 🌐 **A2A PROTOCOL INTEROPERABILITY**

@@ -1,7 +1,7 @@
 # NTG.Adk - Current Status & Roadmap
 
-**Version**: 1.5.5-alpha
-**Last Updated**: 2025-10-26
+**Version**: 1.5.6-alpha
+**Last Updated**: 2025-10-28
 **Location**: `E:\repos\adk-csharp`
 
 ---

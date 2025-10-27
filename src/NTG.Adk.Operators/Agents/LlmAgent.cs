@@ -48,6 +48,16 @@ public class LlmAgent : BaseAgent
     public IAgentCallbacks? Callbacks { get; init; }
 
     /// <summary>
+    /// Dynamic tool providers (executed at runtime)
+    /// </summary>
+    public IReadOnlyList<IToolProvider>? ToolProviders { get; init; }
+
+    /// <summary>
+    /// Request processors (applied before LLM call)
+    /// </summary>
+    public IReadOnlyList<IRequestProcessor>? RequestProcessors { get; init; }
+
+    /// <summary>
     /// Model name/identifier
     /// </summary>
     public string Model { get; init; }
@@ -70,9 +80,9 @@ public class LlmAgent : BaseAgent
     }
 
     /// <summary>
-    /// Get effective tools including AutoFlow transfer tool if enabled.
+    /// Get effective tools including AutoFlow transfer tool and dynamic providers
     /// </summary>
-    private IReadOnlyList<ITool> GetEffectiveTools()
+    private IReadOnlyList<ITool> GetEffectiveTools(IInvocationContext context)
     {
         var tools = new List<ITool>();
 
@@ -92,6 +102,15 @@ public class LlmAgent : BaseAgent
             }
         }
 
+        // Execute dynamic tool providers
+        if (ToolProviders != null)
+        {
+            foreach (var provider in ToolProviders)
+            {
+                tools.AddRange(provider.GetTools(context));
+            }
+        }
+
         return tools;
     }
 
@@ -107,18 +126,28 @@ public class LlmAgent : BaseAgent
         var contents = BuildContents(context);
 
         // 3. Build tool declarations (including AutoFlow transfer tool if enabled)
-        var effectiveTools = GetEffectiveTools();
+        var effectiveTools = GetEffectiveTools(context);
         var toolDeclarations = effectiveTools.Count > 0
             ? effectiveTools.Select(t => t.GetDeclaration()).OfType<IFunctionDeclaration>().ToList()
             : null;
 
         // 4. Create request
-        var request = new LlmRequestImpl
+        ILlmRequest request = new LlmRequestImpl
         {
             SystemInstruction = processedInstruction,
             Contents = contents,
             Tools = toolDeclarations
         };
+
+        // Apply request processors if configured
+        if (RequestProcessors != null)
+        {
+            var sortedProcessors = RequestProcessors.OrderBy(p => p.Priority);
+            foreach (var processor in sortedProcessors)
+            {
+                request = await processor.ProcessAsync(request, context);
+            }
+        }
 
         // 5. Call LLM (streaming or non-streaming based on RunConfig.StreamingMode)
         // Multi-turn loop: continue calling LLM until no more tool calls
@@ -189,7 +218,7 @@ public class LlmAgent : BaseAgent
                         yield return CreateFunctionCallEvent(functionCall);
 
                         // Execute tool
-                        var tool = Tools?.FirstOrDefault(t => t.Name == functionCall.Name);
+                        var tool = effectiveTools.FirstOrDefault(t => t.Name == functionCall.Name);
                         if (tool != null)
                         {
                             var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);
@@ -249,7 +278,7 @@ public class LlmAgent : BaseAgent
                         yield return CreateFunctionCallEvent(functionCall);
 
                         // Execute tool
-                        var tool = Tools?.FirstOrDefault(t => t.Name == functionCall.Name);
+                        var tool = effectiveTools.FirstOrDefault(t => t.Name == functionCall.Name);
                         if (tool != null)
                         {
                             var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);

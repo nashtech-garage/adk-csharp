@@ -9,7 +9,7 @@ NTG.Adk is a production-ready C# implementation of Google's Agent Development Ki
 with 99% feature parity with Python ADK. Built using A.D.D V3 (Abstract Driven
 Development) architecture with strict five-layer separation.
 
-Version: 1.5.5-alpha
+Version: 1.5.6-alpha
 Target: .NET 8.0 LTS (supported until Nov 2026)
 License: Apache 2.0
 Repository: https://github.com/ntg/adk-csharp
@@ -714,6 +714,202 @@ var agenticRetrieval = new AgenticFilesRetrievalTool(
 // 2. Multi-pass grep search
 // 3. LLM ranks results by relevance
 ```
+
+================================================================================
+DYNAMIC EXTENSIBILITY
+================================================================================
+
+NTG.Adk supports runtime tool injection and request modification through
+two extension points:
+- IToolProvider: Context-aware dynamic tool injection
+- IRequestProcessor: LLM request transformation pipeline
+
+--- IToolProvider (Context-Aware Tool Injection) ---
+
+Inject tools dynamically based on runtime context (user role, state, etc.):
+
+```csharp
+using NTG.Adk.CoreAbstractions.Tools;
+using NTG.Adk.CoreAbstractions.Sessions;
+
+// Example 1: Admin-only tools
+public class AdminToolProvider : IToolProvider
+{
+    private readonly ITool _deleteUserTool;
+
+    public AdminToolProvider(ITool deleteUserTool)
+    {
+        _deleteUserTool = deleteUserTool;
+    }
+
+    public IEnumerable<ITool> GetTools(IInvocationContext context)
+    {
+        // Check user role from session state
+        if (context.Session.State.TryGetValue<string>("user_role", out var role)
+            && role == "admin")
+        {
+            yield return _deleteUserTool;
+        }
+    }
+}
+
+// Example 2: Time-based tools
+public class TimeBasedToolProvider : IToolProvider
+{
+    private readonly ITool _nightModeTool;
+    private readonly ITool _dayModeTool;
+
+    public IEnumerable<ITool> GetTools(IInvocationContext context)
+    {
+        var hour = DateTime.Now.Hour;
+        if (hour >= 6 && hour < 18)
+            yield return _dayModeTool;
+        else
+            yield return _nightModeTool;
+    }
+}
+
+// Usage with LlmAgent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ContextAwareAgent",
+    Instruction = "Help users with available tools",
+    Tools = new[] { basicTool1, basicTool2 },  // Always available
+    ToolProviders = new[]
+    {
+        new AdminToolProvider(deleteUserTool),
+        new TimeBasedToolProvider()
+    }  // Context-dependent
+};
+```
+
+--- IRequestProcessor (Request Transformation Pipeline) ---
+
+Transform LLM requests before execution (modify instructions, tools, history).
+Processors execute in priority order (lower number = higher priority).
+
+```csharp
+using NTG.Adk.CoreAbstractions.Models;
+using NTG.Adk.CoreAbstractions.Sessions;
+using NTG.Adk.Operators.Agents;
+
+// Example 1: Dynamic instruction enhancement
+public class ContextInjectionProcessor : IRequestProcessor
+{
+    public int Priority => 10;  // Runs early
+
+    public Task<ILlmRequest> ProcessAsync(
+        ILlmRequest request,
+        IInvocationContext context)
+    {
+        // Get context from session state
+        var userName = context.Session.State.GetValueOrDefault<string>("user_name");
+        var userPrefs = context.Session.State.GetValueOrDefault<string>("preferences");
+
+        // Append context to instruction
+        var contextInfo = $"\n\nUser: {userName}\nPreferences: {userPrefs}";
+        var modified = request.WithAppendedInstruction(contextInfo);
+
+        return Task.FromResult(modified);
+    }
+}
+
+// Example 2: Tool filtering based on state
+public class ToolFilterProcessor : IRequestProcessor
+{
+    public int Priority => 50;  // Runs after context injection
+
+    public Task<ILlmRequest> ProcessAsync(
+        ILlmRequest request,
+        IInvocationContext context)
+    {
+        // Check if in safe mode
+        if (context.Session.State.GetValueOrDefault<bool>("safe_mode"))
+        {
+            // Filter out dangerous tools
+            var safeTools = request.Tools?
+                .Where(t => !t.Name.Contains("delete") && !t.Name.Contains("modify"))
+                .ToList();
+
+            return Task.FromResult(request.WithTools(safeTools ?? new List<IFunctionDeclaration>()));
+        }
+
+        return Task.FromResult(request);
+    }
+}
+
+// Example 3: Token budget management
+public class TokenBudgetProcessor : IRequestProcessor
+{
+    public int Priority => 100;  // Runs last
+
+    public Task<ILlmRequest> ProcessAsync(
+        ILlmRequest request,
+        IInvocationContext context)
+    {
+        // Limit conversation history if too long
+        var maxTokens = context.Session.State.GetValueOrDefault<int>("max_tokens", 100000);
+
+        // Estimate tokens (simplified: 4 chars ≈ 1 token)
+        var estimatedTokens = request.Contents.Sum(c =>
+            c.Parts.Sum(p => (p.Text?.Length ?? 0) / 4));
+
+        if (estimatedTokens > maxTokens * 0.8)  // 80% threshold
+        {
+            // Truncate history (keep system + last N messages)
+            var truncated = request.Contents.Take(1)
+                .Concat(request.Contents.TakeLast(5))
+                .ToList();
+
+            return Task.FromResult(new LlmRequestImpl
+            {
+                SystemInstruction = request.SystemInstruction,
+                Contents = truncated,
+                Tools = request.Tools,
+                Config = request.Config
+            });
+        }
+
+        return Task.FromResult(request);
+    }
+}
+
+// Usage with LlmAgent
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "ProcessedAgent",
+    Instruction = "Base instruction",
+    Tools = new[] { tool1, tool2, tool3 },
+    RequestProcessors = new IRequestProcessor[]
+    {
+        new ContextInjectionProcessor(),    // Priority 10
+        new ToolFilterProcessor(),          // Priority 50
+        new TokenBudgetProcessor()          // Priority 100
+    }
+};
+
+// Processors run in priority order before each LLM call
+var runner = new InMemoryRunner(agent, appName: "ProcessorApp");
+```
+
+--- When to Use Each Pattern ---
+
+**Use IToolProvider when:**
+- Adding/removing tools based on runtime context (user role, time, state)
+- Simple conditional tool availability
+- Tools don't need access to full request details
+
+**Use IRequestProcessor when:**
+- Modifying system instructions dynamically
+- Filtering/transforming conversation history
+- Complex request transformations (token management, safety filtering)
+- Need access to complete request before LLM call
+- Implementing cross-cutting concerns (logging, monitoring, guardrails)
+
+**Combine both when:**
+- IToolProvider adds context-specific tools
+- IRequestProcessor filters or enhances based on broader criteria
+- Building sophisticated agent systems with multiple extension points
 
 ================================================================================
 MULTI-AGENT ORCHESTRATION
@@ -1561,7 +1757,7 @@ License: Apache 2.0
 VERSION INFORMATION
 ================================================================================
 
-NTG.Adk Version: 1.5.5-alpha
+NTG.Adk Version: 1.5.6-alpha
 .NET Target: 8.0 LTS (until Nov 2026)
 Python ADK Parity: 99%
 Production Ready: Yes
