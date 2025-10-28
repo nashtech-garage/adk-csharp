@@ -19,7 +19,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>NTG.Adk</PackageId>
-    <Version>1.5.6-alpha</Version>
+    <Version>1.6.0-alpha</Version>
     <Authors>NTG</Authors>
     <Company>NTG</Company>
     <Description>NTG Agent Development Kit - Production-ready C# implementation of Google ADK with A.D.D V3 architecture. Includes multi-agent orchestration, LLM adapters (Gemini, OpenAI), MCP protocol, OpenAPI toolset, and comprehensive agent development features.</Description>
