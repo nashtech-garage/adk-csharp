@@ -376,14 +376,46 @@ public class LlmAgent : BaseAgent
     {
         var contents = new List<IContent>();
 
-        // Add user input
+        // Build from session events (full conversation history)
+        // Python ADK approach: include_contents='default'
+        foreach (var evt in context.Session.Events)
+        {
+            // Skip events without content
+            if (evt.Content == null || evt.Content.Parts == null || evt.Content.Parts.Count == 0)
+                continue;
+
+            // Include user/model content
+            var role = evt.Content.Role;
+            if (role == "user" || role == "model")
+            {
+                contents.Add(evt.Content);
+            }
+        }
+
+        // Add current user input if not already in events
         if (context.UserInput != null)
         {
-            contents.Add(new SimpleContent
+            // Check if last event is current user input
+            var needToAdd = true;
+            if (contents.Count > 0)
             {
-                Role = "user",
-                Parts = [new SimplePart { Text = context.UserInput }]
-            });
+                var lastContent = contents[contents.Count - 1];
+                if (lastContent.Role == "user" &&
+                    lastContent.Parts.Count > 0 &&
+                    lastContent.Parts[0].Text == context.UserInput)
+                {
+                    needToAdd = false;
+                }
+            }
+
+            if (needToAdd)
+            {
+                contents.Add(new SimpleContent
+                {
+                    Role = "user",
+                    Parts = [new SimplePart { Text = context.UserInput }]
+                });
+            }
         }
 
         return contents;

@@ -37,6 +37,18 @@ public interface IEvent
     /// Whether this is a partial event (streaming)
     /// </summary>
     bool Partial { get; }
+
+    /// <summary>
+    /// Branch identifier for multi-agent context isolation
+    /// (Python ADK compatibility)
+    /// </summary>
+    string? Branch { get; }
+
+    /// <summary>
+    /// Invocation identifier to track which user turn this event belongs to
+    /// (Python ADK compatibility - used for sliding window compaction)
+    /// </summary>
+    string? InvocationId { get; }
 }
 
 /// <summary>
@@ -90,4 +102,15 @@ public interface IEventActions
     string? TransferTo { get; }
     IReadOnlyDictionary<string, object>? StateDelta { get; }
     IReadOnlyDictionary<string, object>? CustomActions { get; }
+    IEventCompaction? Compaction { get; }
+}
+
+/// <summary>
+/// Event compaction interface
+/// </summary>
+public interface IEventCompaction
+{
+    double StartTimestamp { get; }
+    double EndTimestamp { get; }
+    IContent CompactedContent { get; }
 }

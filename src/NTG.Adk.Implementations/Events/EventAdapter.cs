@@ -25,6 +25,8 @@ public class EventAdapter : IEvent
     public IReadOnlyDictionary<string, object>? Metadata => _event.Metadata;
     public DateTimeOffset Timestamp => _event.Timestamp;
     public bool Partial => _event.Partial;
+    public string? Branch => _event.Branch;
+    public string? InvocationId => _event.InvocationId;
 
     /// <summary>
     /// Get the underlying boundary DTO
@@ -132,4 +134,22 @@ internal class EventActionsAdapter : IEventActions
     public string? TransferTo => _actions.TransferTo;
     public IReadOnlyDictionary<string, object>? StateDelta => _actions.StateDelta;
     public IReadOnlyDictionary<string, object>? CustomActions => _actions.CustomActions;
+    public IEventCompaction? Compaction => _actions.Compaction != null ? new EventCompactionAdapter(_actions.Compaction) : null;
+}
+
+/// <summary>
+/// Event compaction adapter
+/// </summary>
+internal class EventCompactionAdapter : IEventCompaction
+{
+    private readonly Boundary.Events.EventCompaction _compaction;
+
+    public EventCompactionAdapter(Boundary.Events.EventCompaction compaction)
+    {
+        _compaction = compaction;
+    }
+
+    public double StartTimestamp => _compaction.StartTimestamp;
+    public double EndTimestamp => _compaction.EndTimestamp;
+    public IContent CompactedContent => new ContentAdapter(_compaction.CompactedContent);
 }

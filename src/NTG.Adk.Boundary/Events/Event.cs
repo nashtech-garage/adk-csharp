@@ -38,4 +38,16 @@ public record Event
     /// Whether this is a partial event (streaming)
     /// </summary>
     public bool Partial { get; init; }
+
+    /// <summary>
+    /// Branch identifier for multi-agent context isolation
+    /// (Python ADK compatibility)
+    /// </summary>
+    public string? Branch { get; init; }
+
+    /// <summary>
+    /// Invocation identifier to track which user turn this event belongs to
+    /// (Python ADK compatibility - used for sliding window compaction)
+    /// </summary>
+    public string? InvocationId { get; init; }
 }
