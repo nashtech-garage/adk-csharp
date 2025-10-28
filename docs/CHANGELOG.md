@@ -2,6 +2,119 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0-alpha] - 2025-10-28
+
+### 🔄 **CONVERSATION HISTORY & SLIDING WINDOW COMPACTION**
+
+This release fixes critical conversation history bugs and adds Python ADK-compatible sliding window compaction for long conversations.
+
+#### Conversation History Infrastructure (Phase 1) ✅
+
+- **Event-Based History** - Messages built from events on-the-fly (Python ADK approach)
+  - Fixed bug where agents couldn't remember previous turns
+  - LlmAgent.BuildContents() now iterates through all events in session
+  - Filters for user/model content to build conversation history
+  - Eliminates need for separate history storage
+
+- **InMemoryMessageHistory** - Wraps events list for history access
+  - Provides event iteration with filtering
+  - Supports multi-turn conversations
+  - Session-aware history management
+
+#### Sliding Window Compaction (Phase 2) ✅
+
+- **InvocationId Tracking** - Turn management for compaction
+  - Added InvocationId property to IEvent and Event DTO
+  - Each event tagged with invocation ID for turn tracking
+  - Enables range-based compaction logic
+
+- **Branch Support** - Multi-agent context isolation
+  - Added Branch property to IEvent and Event DTO
+  - Python ADK compatibility for parallel agent execution
+  - Prevents context leakage between agents
+
+- **EventCompaction** - LLM-generated summaries
+  - StartTimestamp and EndTimestamp for compaction range
+  - CompactedContent with LLM summary
+  - Integrated into EventActions
+
+- **IEventSummarizer Port** - Event summarization interface
+  - MaybeSummarizeEventsAsync for conditional summarization
+  - Port interface in CoreAbstractions
+  - Enables custom summarization strategies
+
+- **LlmEventSummarizer** - LLM-based summarizer
+  - Operator layer implementation using ILlm
+  - Configurable prompt template
+  - Formats conversation history for LLM
+  - Generates concise summaries of event ranges
+
+- **CompactionService** - Sliding window algorithm
+  - Implementation layer service
+  - Tracks invocation IDs and timestamps
+  - Triggers after CompactionInterval new invocations
+  - Overlaps OverlapSize invocations for context continuity
+  - Integrated into Runner (runs after agent finishes)
+
+- **EventsCompactionConfig** - Compaction configuration
+  - CompactionInterval: invocations before triggering (default: 10)
+  - OverlapSize: invocations to overlap (default: 2)
+  - Summarizer: custom IEventSummarizer (auto-creates LlmEventSummarizer if null)
+  - Enabled: toggle compaction on/off (default: true)
+
+- **RunConfig Integration** - Added EventsCompactionConfig property
+  - Optional configuration (default: null, no compaction)
+  - Must be explicitly configured to enable compaction
+
+#### Files Modified
+
+- `src/NTG.Adk.CoreAbstractions/Events/IEvent.cs`
+  - Added InvocationId and Branch properties
+  - Added IEventCompaction interface
+
+- `src/NTG.Adk.Boundary/Events/Event.cs`
+  - Added InvocationId and Branch properties
+
+- `src/NTG.Adk.Boundary/Events/EventActions.cs`
+  - Added EventCompaction record
+
+- `src/NTG.Adk.Implementations/Events/EventAdapter.cs`
+  - Added InvocationId and Compaction adapters
+  - EventCompactionAdapter for DTO-to-interface conversion
+
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs`
+  - Fixed BuildContents() to iterate through all events
+  - Filters user/model content for conversation history
+
+- `src/NTG.Adk.CoreAbstractions/Agents/RunConfig.cs`
+  - Added EventsCompactionConfig property
+
+- `src/NTG.Adk.Operators/Runners/Runner.cs`
+  - Integrated compaction after agent execution in RunAsync
+  - Integrated compaction after rewind in RewindAsync
+
+#### Files Added
+
+- `src/NTG.Adk.CoreAbstractions/Compaction/IEventSummarizer.cs`
+- `src/NTG.Adk.CoreAbstractions/Compaction/EventsCompactionConfig.cs`
+- `src/NTG.Adk.Operators/Compaction/LlmEventSummarizer.cs`
+- `src/NTG.Adk.Implementations/Compaction/CompactionService.cs`
+
+#### Architecture Compliance
+
+- ✅ **100% A.D.D V3 Compliant** - All ports in CoreAbstractions
+- ✅ **Python ADK Compatible** - Sliding window algorithm matches Python implementation
+- ✅ **Zero coupling** - Clean layer boundaries maintained
+- ✅ **Functional patterns** - Immutable event compaction
+
+#### Statistics
+
+- **Build**: 0 errors, 0 warnings (Clean build maintained)
+- **New Ports**: 1 (IEventSummarizer)
+- **New Config**: 1 (EventsCompactionConfig)
+- **New Services**: 2 (LlmEventSummarizer, CompactionService)
+- **Lines Added**: ~400 lines (infrastructure + compaction)
+
 ## [1.5.6-alpha] - 2025-10-28
 
 ### 🐛 **BUG FIX + EXTENSIBILITY ENHANCEMENTS**
