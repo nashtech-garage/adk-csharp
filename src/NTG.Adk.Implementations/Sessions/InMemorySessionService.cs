@@ -347,12 +347,15 @@ public class InMemorySessionService : ISessionService
 
         var newEvents = session.Events.ToList();
 
+        // Create new InMemoryMessageHistory wired to newEvents
+        var newHistory = new InMemoryMessageHistory(newEvents as List<CoreAbstractions.Events.IEvent> ?? new List<CoreAbstractions.Events.IEvent>());
+
         return new InMemorySession(
             appName: session.AppName,
             userId: session.UserId,
             sessionId: session.SessionId,
             state: newState,
-            history: session.History,
+            history: newHistory,
             events: newEvents,
             lastUpdateTime: session.LastUpdateTime,
             memory: session.Memory

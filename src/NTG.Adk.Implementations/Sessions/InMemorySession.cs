@@ -26,8 +26,8 @@ public class InMemorySession : ISession
     {
         SessionId = sessionId ?? Guid.NewGuid().ToString();
         State = new InMemorySessionState();
-        History = new InMemoryMessageHistory();
         Events = new List<CoreAbstractions.Events.IEvent>();
+        History = new InMemoryMessageHistory(Events as List<CoreAbstractions.Events.IEvent> ?? new List<CoreAbstractions.Events.IEvent>());
         LastUpdateTime = DateTimeOffset.UtcNow;
         Memory = memoryService;
     }
@@ -46,8 +46,8 @@ public class InMemorySession : ISession
         UserId = userId;
         SessionId = sessionId;
         State = state;
-        History = history ?? new InMemoryMessageHistory();
         Events = events ?? new List<CoreAbstractions.Events.IEvent>();
+        History = history ?? new InMemoryMessageHistory(Events as List<CoreAbstractions.Events.IEvent> ?? new List<CoreAbstractions.Events.IEvent>());
         LastUpdateTime = lastUpdateTime ?? DateTimeOffset.UtcNow;
         Memory = memory;
     }
@@ -95,46 +95,7 @@ public class InMemorySessionState : ISessionState
     public void Clear() => _state.Clear();
 }
 
-/// <summary>
-/// In-memory message history implementation
-/// </summary>
-public class InMemoryMessageHistory : IMessageHistory
-{
-    private readonly List<IMessage> _messages = new();
-    private readonly object _lock = new();
-
-    public void Add(IMessage message)
-    {
-        lock (_lock)
-        {
-            _messages.Add(message);
-        }
-    }
-
-    public IReadOnlyList<IMessage> GetAll()
-    {
-        lock (_lock)
-        {
-            return _messages.ToList();
-        }
-    }
-
-    public IReadOnlyList<IMessage> GetBranch(string branch)
-    {
-        lock (_lock)
-        {
-            return _messages.Where(m => m.Branch == branch).ToList();
-        }
-    }
-
-    public void Clear()
-    {
-        lock (_lock)
-        {
-            _messages.Clear();
-        }
-    }
-}
+// InMemoryMessageHistory moved to separate file InMemoryMessageHistory.cs
 
 /// <summary>
 /// Simple message implementation

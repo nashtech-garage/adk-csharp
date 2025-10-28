@@ -1,6 +1,8 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using NTG.Adk.CoreAbstractions.Compaction;
+
 namespace NTG.Adk.CoreAbstractions.Agents;
 
 /// <summary>
@@ -29,4 +31,10 @@ public class RunConfig
     ///   - Bidi: Bidirectional streaming
     /// </summary>
     public StreamingMode StreamingMode { get; set; } = StreamingMode.None;
+
+    /// <summary>
+    /// Sliding window compaction configuration.
+    /// Default: null (no compaction - must be explicitly configured)
+    /// </summary>
+    public EventsCompactionConfig? EventsCompactionConfig { get; set; }
 }
