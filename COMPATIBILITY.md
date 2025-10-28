@@ -2,7 +2,7 @@
 ## NTG.Adk (C#) vs google/adk-python Feature Parity
 
 **Last Updated:** 2025-10-28
-**C# Version:** 1.5.6-alpha
+**C# Version:** 1.6.0-alpha
 **Python Reference:** google/adk-python main branch
 
 ---
