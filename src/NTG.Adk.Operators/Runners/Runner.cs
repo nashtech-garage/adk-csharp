@@ -7,6 +7,7 @@ using NTG.Adk.CoreAbstractions.Artifacts;
 using NTG.Adk.CoreAbstractions.Events;
 using NTG.Adk.CoreAbstractions.Memory;
 using NTG.Adk.CoreAbstractions.Sessions;
+using NTG.Adk.Implementations.Compaction;
 using NTG.Adk.Implementations.Sessions;
 
 namespace NTG.Adk.Operators.Runners;
@@ -107,6 +108,16 @@ public class Runner
 
             yield return evt;
         }
+
+        // Run compaction after agent finishes (Python ADK approach)
+        if (RunConfig.EventsCompactionConfig != null)
+        {
+            await CompactionService.RunCompactionIfNeededAsync(
+                session,
+                SessionService,
+                RunConfig.EventsCompactionConfig,
+                cancellationToken);
+        }
     }
 
     /// <summary>
@@ -169,6 +180,16 @@ public class Runner
             await SessionService.AppendEventAsync(session, evt, cancellationToken);
 
             yield return evt;
+        }
+
+        // Run compaction after agent finishes (Python ADK approach)
+        if (RunConfig.EventsCompactionConfig != null)
+        {
+            await CompactionService.RunCompactionIfNeededAsync(
+                session,
+                SessionService,
+                RunConfig.EventsCompactionConfig,
+                cancellationToken);
         }
     }
 }
