@@ -110,6 +110,17 @@ public class OpenAILlm : ILlm
         // Add content messages (message history)
         foreach (var content in request.Contents)
         {
+            // Skip empty Parts list (streaming updates with no content)
+            if (content.Parts == null || content.Parts.Count == 0)
+                continue;
+
+            // Skip content with only empty text parts (no function calls/responses)
+            if (content.Parts.All(p =>
+                string.IsNullOrWhiteSpace(p.Text) &&
+                p.FunctionCall == null &&
+                p.FunctionResponse == null))
+                continue;
+
             messages.Add(ConvertContent(content));
         }
 

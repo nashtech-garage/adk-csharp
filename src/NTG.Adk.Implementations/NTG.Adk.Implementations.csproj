@@ -29,7 +29,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>NTG.Adk.Implementations</PackageId>
-    <Version>1.6.0-alpha</Version>
+    <Version>1.6.1-alpha</Version>
     <Authors>NTG</Authors>
     <Company>NTG</Company>
     <Description>NTG.Adk Implementations - Concrete implementations and adapters (Layer 3 of A.D.D V3 architecture)</Description>
