@@ -265,6 +265,91 @@ var agent = new LlmAgent(llm, modelId: "gemini-2.0-flash-exp")
 agent.AddSubAgents(subAgent1, subAgent2);
 ```
 
+**Advanced LlmAgent Features:**
+
+Callbacks (IAgentCallbacks):
+```csharp
+public class MyCallbacks : IAgentCallbacks
+{
+    public async Task<IContent?> BeforeModelAsync(ICallbackContext context, ILlmRequest request, CancellationToken ct)
+    {
+        // Intercept before LLM call, can modify request or return content to skip LLM
+        return null; // null = continue normally
+    }
+
+    public async Task<IContent?> AfterModelAsync(ICallbackContext context, ILlmResponse response, CancellationToken ct)
+    {
+        // Intercept after LLM response, can replace response
+        return null; // null = use response normally
+    }
+
+    public Task OnToolStartAsync(ICallbackContext context, string toolName, IReadOnlyDictionary<string, object> args, CancellationToken ct)
+    {
+        // Hook before tool execution
+        return Task.CompletedTask;
+    }
+
+    public Task OnToolEndAsync(ICallbackContext context, string toolName, object result, CancellationToken ct)
+    {
+        // Hook after tool completion
+        return Task.CompletedTask;
+    }
+}
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Assistant",
+    Callbacks = new MyCallbacks()
+};
+```
+
+Dynamic Tool Providers (IToolProvider):
+```csharp
+public class ContextAwareToolProvider : IToolProvider
+{
+    public IEnumerable<ITool> GetTools(IInvocationContext context)
+    {
+        // Return tools based on runtime context (session state, user, etc.)
+        if (context.Session.State.Get<bool>("admin_mode"))
+        {
+            yield return adminTool;
+        }
+        yield return regularTool;
+    }
+}
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Assistant",
+    ToolProviders = new List<IToolProvider> { new ContextAwareToolProvider() }
+};
+```
+
+Request Processors (IRequestProcessor):
+```csharp
+public class CustomRequestProcessor : IRequestProcessor
+{
+    public int Priority => 50; // Lower runs first
+
+    public async Task<ILlmRequest> ProcessAsync(ILlmRequest request, IInvocationContext context)
+    {
+        // Transform request before LLM call (modify system instruction, tools, etc.)
+        return new LlmRequestImpl
+        {
+            SystemInstruction = request.SystemInstruction + "\nBe concise.",
+            Contents = request.Contents,
+            Tools = request.Tools
+        };
+    }
+}
+
+var agent = new LlmAgent(llm, "gemini-2.0-flash-exp")
+{
+    Name = "Assistant",
+    RequestProcessors = new List<IRequestProcessor> { new CustomRequestProcessor() }
+};
+```
+
 --- SequentialAgent ---
 
 Execute agents in order, each receiving previous agent's output.

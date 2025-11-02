@@ -77,6 +77,12 @@
 | MCP Protocol | ❌ | ✅ | **Extra** | Model Context Protocol integration |
 | State prefixes | ✅ | ✅ | **Complete** | app:, user:, temp: namespacing |
 | Multi-user support | ✅ | ✅ | **Complete** | Per-user session isolation |
+| LLM Callbacks | ✅ | ✅ | **Complete** | Before/after model hooks |
+| Tool Callbacks | ✅ | ✅ | **Complete** | Before/after tool execution hooks |
+| Agent Callbacks | ✅ | ❌ | **Planned** | Before/after agent run hooks |
+| Tool Error Callbacks | ✅ | ❌ | **Planned** | Error handling hooks |
+| Request Processors | ❌ | ✅ | **Extra** | Request transformation pipeline |
+| Dynamic Tool Providers | ❌ | ✅ | **Extra** | Context-aware tool injection |
 
 ---
 
@@ -156,9 +162,11 @@
 2. **FileArtifactService** - Disk-based artifact storage with versioning (not in Python)
 3. **MCP Protocol Support** - Model Context Protocol integration (not in Python)
 4. **OpenAPIToolset** - Full OpenAPI 3.0 spec parser (Python has basic support)
-5. **A.D.D V3 Architecture** - Strict 5-layer fractal design (Python is more flexible)
-6. **Strong Typing** - Full C# type safety and IntelliSense support
-7. **.NET 8 LTS** - Long-term support until November 2026
+5. **Request Processors** - Priority-based request transformation pipeline (not in Python)
+6. **Dynamic Tool Providers** - Context-aware runtime tool injection (not in Python)
+7. **A.D.D V3 Architecture** - Strict 5-layer fractal design (Python is more flexible)
+8. **Strong Typing** - Full C# type safety and IntelliSense support
+9. **.NET 8 LTS** - Long-term support until November 2026
 
 ---
 

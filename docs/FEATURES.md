@@ -20,6 +20,9 @@
   - ✅ `Model` - LLM model identifier
   - ✅ `SubAgents` - Multi-agent delegation
   - ✅ `InputSchema` / `OutputSchema` - Structured I/O
+  - ✅ `Callbacks` - Lifecycle hooks (before/after model, tool start/end)
+  - ✅ `ToolProviders` - Dynamic context-aware tool injection
+  - ✅ `RequestProcessors` - Request transformation pipeline with priority
 
 #### 2. **Workflow Agents** (`NTG.Adk.Operators.Workflows`)
 
@@ -51,7 +54,29 @@
   - `GetDeclaration()` - JSON schema for LLM
   - `ExecuteAsync()` - Execute with args
 
-#### 4. **Events** (`NTG.Adk.Boundary.Events`, `NTG.Adk.CoreAbstractions.Events`)
+- ✅ **IToolProvider** - Dynamic tool injection
+  - `GetTools()` - Provide tools based on invocation context
+  - Context-aware tool selection
+  - Runtime tool composition
+
+#### 4. **Callbacks** (`NTG.Adk.CoreAbstractions.Agents`)
+
+- ✅ **IAgentCallbacks** - Lifecycle hooks
+  - `BeforeModelAsync()` - Intercept before LLM call, can skip LLM
+  - `AfterModelAsync()` - Intercept after LLM response, can replace response
+  - `OnToolStartAsync()` - Hook before tool execution
+  - `OnToolEndAsync()` - Hook after tool completion
+  - `ICallbackContext` - Access to session, state, metadata
+
+#### 5. **Request Processors** (`NTG.Adk.CoreAbstractions.Models`)
+
+- ✅ **IRequestProcessor** - Request transformation pipeline
+  - `ProcessAsync()` - Transform LLM request before execution
+  - `Priority` - Control execution order (lower runs first)
+  - Can modify system instructions, tools, conversation history
+  - Supports multiple processors with ordered execution
+
+#### 6. **Events** (`NTG.Adk.Boundary.Events`, `NTG.Adk.CoreAbstractions.Events`)
 
 - ✅ **Event** - Core event DTO
   - `Author` - Event source
@@ -73,7 +98,7 @@
   - `Escalate` - Stop workflow, propagate to parent
   - `TransferTo` - Agent delegation target
 
-#### 5. **Sessions** (`NTG.Adk.Implementations.Sessions`, `NTG.Adk.CoreAbstractions.Sessions`)
+#### 7. **Sessions** (`NTG.Adk.Implementations.Sessions`, `NTG.Adk.CoreAbstractions.Sessions`)
 
 - ✅ **ISession** - Session management port
   - `SessionId` - Unique identifier
@@ -92,7 +117,7 @@
   - `UserInput` - User message
   - `WithBranch()` / `WithUserInput()` - Immutable updates
 
-#### 6. **Models** (`NTG.Adk.Implementations.Models`, `NTG.Adk.CoreAbstractions.Models`)
+#### 8. **Models** (`NTG.Adk.Implementations.Models`, `NTG.Adk.CoreAbstractions.Models`)
 
 - ✅ **ILlm** - LLM provider port
   - `GenerateAsync()` - Single completion
@@ -102,7 +127,7 @@
   - Echo responses
   - Useful for unit tests and demos
 
-#### 7. **Bootstrap** (`NTG.Adk.Bootstrap`)
+#### 9. **Bootstrap** (`NTG.Adk.Bootstrap`)
 
 - ✅ **Runner** - Main entry point
   - `RunAsync()` - Execute agent, return final text
