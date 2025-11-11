@@ -136,7 +136,8 @@ public class LlmAgent : BaseAgent
         {
             SystemInstruction = processedInstruction,
             Contents = contents,
-            Tools = toolDeclarations
+            Tools = toolDeclarations,
+            ToolChoice = toolDeclarations != null && toolDeclarations.Count > 0 ? "auto" : null
         };
 
         // Apply request processors if configured
@@ -242,7 +243,8 @@ public class LlmAgent : BaseAgent
                     {
                         SystemInstruction = processedInstruction,
                         Contents = contents,
-                        Tools = toolDeclarations
+                        Tools = toolDeclarations,
+                        ToolChoice = toolDeclarations != null && toolDeclarations.Count > 0 ? "auto" : null
                     };
 
                     // Continue to next turn
@@ -302,7 +304,8 @@ public class LlmAgent : BaseAgent
                     {
                         SystemInstruction = processedInstruction,
                         Contents = contents,
-                        Tools = toolDeclarations
+                        Tools = toolDeclarations,
+                        ToolChoice = toolDeclarations != null && toolDeclarations.Count > 0 ? "auto" : null
                     };
 
                     // Continue to next turn
@@ -575,6 +578,7 @@ internal class LlmRequestImpl : ILlmRequest
     public required List<IContent> Contents { get; init; }
     IReadOnlyList<IContent> ILlmRequest.Contents => Contents;
     public IReadOnlyList<IFunctionDeclaration>? Tools { get; init; }
+    public string? ToolChoice { get; init; }
     public IGenerationConfig? Config { get; init; }
 }
 

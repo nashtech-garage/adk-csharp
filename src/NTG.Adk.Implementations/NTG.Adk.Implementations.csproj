@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.22" />
     <PackageReference Include="ModelContextProtocol" Version="0.4.0-preview.3" />
     <PackageReference Include="ModelContextProtocol.Core" Version="0.4.0-preview.3" />
-    <PackageReference Include="OpenAI" Version="2.5.0" />
+    <PackageReference Include="OpenAI" Version="2.6.0" />
     <PackageReference Include="YamlDotNet" Version="16.2.0" />
   </ItemGroup>
 
@@ -29,7 +29,7 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>NTG.Adk.Implementations</PackageId>
-    <Version>1.6.2-alpha</Version>
+    <Version>1.6.3</Version>
     <Authors>NTG</Authors>
     <Company>NTG</Company>
     <Description>NTG.Adk Implementations - Concrete implementations and adapters (Layer 3 of A.D.D V3 architecture)</Description>

@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.3] - 2025-11-11
+
+### 🧹 **PRODUCTION READINESS**
+
+Removed all debug file logging to ensure production-clean codebase.
+
+#### Changes
+
+- **OpenAILlm** - Removed debug file logging
+  - Removed temp file logging from GenerateAsync method
+  - Removed ConvertResponse debug instrumentation
+  - Ensures no file I/O side effects in production environments
+
+- **LlmAgent** - Removed debug file logging
+  - Removed streaming mode debug logging from RunAsyncImpl
+  - Clean agent execution without file system dependencies
+
+#### Files Modified
+
+- `src/NTG.Adk.Implementations/Models/OpenAILlm.cs`
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs`
+
 ## [1.6.0-alpha] - 2025-10-28
 
 ### 🔄 **CONVERSATION HISTORY & SLIDING WINDOW COMPACTION**

@@ -481,6 +481,7 @@ internal class SimpleLlmRequest : ILlmRequest
     public required List<IContent> Contents { get; init; }
     IReadOnlyList<IContent> ILlmRequest.Contents => Contents;
     public IReadOnlyList<IFunctionDeclaration>? Tools => null;
+    public string? ToolChoice => null;
     public IGenerationConfig? Config { get; init; }
 }
 

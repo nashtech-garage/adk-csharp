@@ -53,6 +53,11 @@ public interface ILlmRequest
     IReadOnlyList<IFunctionDeclaration>? Tools { get; }
 
     /// <summary>
+    /// Tool choice mode (auto, required, none, or specific tool name)
+    /// </summary>
+    string? ToolChoice { get; }
+
+    /// <summary>
     /// Generation config (temperature, top_p, etc.)
     /// </summary>
     IGenerationConfig? Config { get; }

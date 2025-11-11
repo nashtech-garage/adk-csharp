@@ -138,6 +138,18 @@ public class OpenAILlm : ILlm
             {
                 options.Tools.Add(ConvertFunctionDeclaration(tool));
             }
+
+            // Set tool choice if specified
+            if (!string.IsNullOrEmpty(request.ToolChoice))
+            {
+                options.ToolChoice = request.ToolChoice.ToLowerInvariant() switch
+                {
+                    "auto" => ChatToolChoice.CreateAutoChoice(),
+                    "required" or "any" => ChatToolChoice.CreateRequiredChoice(),
+                    "none" => ChatToolChoice.CreateNoneChoice(),
+                    _ => ChatToolChoice.CreateFunctionChoice(request.ToolChoice)
+                };
+            }
         }
 
         // Add generation config
@@ -284,19 +296,6 @@ public class OpenAILlm : ILlm
 
     private ILlmResponse ConvertResponse(ChatCompletion completion)
     {
-        var choice = completion.Content.FirstOrDefault();
-        if (choice == null)
-        {
-            return new OpenAILlmResponse
-            {
-                Content = null,
-                Text = null,
-                FunctionCalls = null,
-                FinishReason = completion.FinishReason.ToString(),
-                Usage = ConvertUsage(completion.Usage)
-            };
-        }
-
         // Extract text
         var text = string.Join("", completion.Content.Select(c => c.Text ?? string.Empty));
 

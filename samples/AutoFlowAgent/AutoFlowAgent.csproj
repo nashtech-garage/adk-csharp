@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.53.0" />
-    <PackageReference Include="OpenAI" Version="2.5.0" />
+    <PackageReference Include="OpenAI" Version="2.6.0" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -120,6 +120,7 @@ internal class LlmRequestImpl : ILlmRequest
     public required List<IContent> Contents { get; init; }
     IReadOnlyList<IContent> ILlmRequest.Contents => Contents;
     public IReadOnlyList<IFunctionDeclaration>? Tools { get; init; }
+    public string? ToolChoice { get; init; }
     public IGenerationConfig? Config { get; init; }
 }
 
