@@ -1,10 +1,9 @@
 // Copyright 2025 NTG
 // Licensed under Apache License, Version 2.0
 
+using System.Net.Http;
 using System.Text.Json;
 using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Readers;
 using NTG.Adk.Boundary.Tools;
 using NTG.Adk.Boundary.Tools.Auth;
 using NTG.Adk.CoreAbstractions.Tools;
@@ -53,11 +52,16 @@ public sealed class OpenAPIToolset
             specStr = serializer.Serialize(yamlObject);
         }
 
-        // Parse OpenAPI spec
-        var reader = new OpenApiStringReader();
-        _openApiDoc = reader.Read(specStr, out var diagnostic);
+        // Parse OpenAPI spec using v2.x API
+        var result = OpenApiDocument.Parse(specStr);
 
-        if (diagnostic.Errors.Count > 0)
+        if (result.Document == null)
+            throw new InvalidOperationException("Failed to parse OpenAPI spec: Document is null");
+
+        _openApiDoc = result.Document;
+        var diagnostic = result.Diagnostic;
+
+        if (diagnostic?.Errors.Count > 0)
         {
             var errors = string.Join(", ", diagnostic.Errors.Select(e => e.Message));
             throw new InvalidOperationException($"Failed to parse OpenAPI spec: {errors}");
@@ -112,6 +116,9 @@ public sealed class OpenAPIToolset
         // Iterate through all paths and operations
         foreach (var path in _openApiDoc.Paths)
         {
+            if (path.Value.Operations == null)
+                continue;
+
             foreach (var operation in path.Value.Operations)
             {
                 var tool = CreateToolFromOperation(
@@ -134,7 +141,7 @@ public sealed class OpenAPIToolset
     private RestApiTool? CreateToolFromOperation(
         string baseUrl,
         string path,
-        OperationType operationType,
+        HttpMethod httpMethod,
         OpenApiOperation operation)
     {
         // Get operation ID (tool name)
@@ -142,14 +149,14 @@ public sealed class OpenAPIToolset
         if (string.IsNullOrWhiteSpace(operationId))
         {
             // Generate name from path and method
-            operationId = $"{operationType}_{path.Replace("/", "_").Replace("{", "").Replace("}", "").Trim('_')}";
+            operationId = $"{httpMethod.Method}_{path.Replace("/", "_").Replace("{", "").Replace("}", "").Trim('_')}";
         }
 
         // Convert operationId to snake_case
         var toolName = ToSnakeCase(operationId);
 
         // Get description
-        var description = operation.Summary ?? operation.Description ?? $"{operationType} {path}";
+        var description = operation.Summary ?? operation.Description ?? $"{httpMethod.Method} {path}";
 
         // Build parameter schema
         var schema = BuildParameterSchema(operation);
@@ -160,7 +167,7 @@ public sealed class OpenAPIToolset
             description: description,
             baseUrl: baseUrl,
             path: path,
-            method: operationType.ToString().ToUpperInvariant(),
+            method: httpMethod.Method.ToUpperInvariant(),
             parameters: schema,
             authScheme: _globalAuthScheme,
             authCredential: _globalAuthCredential);
@@ -175,8 +182,11 @@ public sealed class OpenAPIToolset
         var required = new List<string>();
 
         // Add parameters (path, query, header, cookie)
-        foreach (var parameter in operation.Parameters ?? Enumerable.Empty<OpenApiParameter>())
+        foreach (var parameter in operation.Parameters ?? Enumerable.Empty<IOpenApiParameter>())
         {
+            if (string.IsNullOrWhiteSpace(parameter.Name))
+                continue;
+
             var propSchema = ConvertOpenApiSchemaToSchemaProperty(parameter.Schema);
             properties[parameter.Name] = propSchema with
             {
@@ -190,7 +200,7 @@ public sealed class OpenAPIToolset
         }
 
         // Add request body parameters
-        if (operation.RequestBody != null)
+        if (operation.RequestBody?.Content != null)
         {
             var jsonContent = operation.RequestBody.Content
                 .FirstOrDefault(c => c.Key.Contains("json", StringComparison.OrdinalIgnoreCase));
@@ -200,7 +210,7 @@ public sealed class OpenAPIToolset
                 var bodySchema = jsonContent.Value.Schema;
 
                 // Flatten request body properties into parameters
-                foreach (var prop in bodySchema.Properties ?? new Dictionary<string, OpenApiSchema>())
+                foreach (var prop in bodySchema.Properties ?? new Dictionary<string, IOpenApiSchema>())
                 {
                     properties[prop.Key] = ConvertOpenApiSchemaToSchemaProperty(prop.Value);
 
@@ -221,15 +231,21 @@ public sealed class OpenAPIToolset
     }
 
     // Convert OpenApiSchema to ADK SchemaProperty
-    private SchemaProperty ConvertOpenApiSchemaToSchemaProperty(OpenApiSchema openApiSchema)
+    private SchemaProperty ConvertOpenApiSchemaToSchemaProperty(IOpenApiSchema? openApiSchema)
     {
+        if (openApiSchema == null)
+        {
+            return new SchemaProperty { Type = "string" };
+        }
+
         var type = openApiSchema.Type switch
         {
-            "integer" => "integer",
-            "number" => "number",
-            "boolean" => "boolean",
-            "array" => "array",
-            "object" => "object",
+            JsonSchemaType.Integer => "integer",
+            JsonSchemaType.Number => "number",
+            JsonSchemaType.Boolean => "boolean",
+            JsonSchemaType.Array => "array",
+            JsonSchemaType.Object => "object",
+            JsonSchemaType.String => "string",
             _ => "string"
         };
 
