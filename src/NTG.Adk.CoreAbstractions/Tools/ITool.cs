@@ -79,6 +79,13 @@ public interface ISchemaProperty
 public interface IToolContext
 {
     /// <summary>
+    /// The current session for this invocation.
+    /// Provides access to session ID, app name, user ID, and session state.
+    /// Matches Python ADK's context.session property.
+    /// </summary>
+    Sessions.ISession Session { get; }
+
+    /// <summary>
     /// Session state (read/write access)
     /// </summary>
     Sessions.ISessionState State { get; }

@@ -462,6 +462,7 @@ public class LlmAgent : BaseAgent
         var toolActions = new ToolActionsImpl();
         var toolContext = new ToolContextImpl
         {
+            Session = context.Session,
             State = context.Session.State,
             User = null, // User context not available in current IInvocationContext
             Actions = toolActions
@@ -600,6 +601,7 @@ internal class SimplePart : IPart
 
 internal class ToolContextImpl : IToolContext
 {
+    public required ISession Session { get; init; }
     public required ISessionState State { get; init; }
     public string? User { get; init; }
     public IReadOnlyDictionary<string, object>? Metadata { get; init; }

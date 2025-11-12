@@ -12,13 +12,15 @@ namespace NTG.Adk.Implementations.Tools;
 /// </summary>
 public class ToolContext : IToolContext
 {
+    public ISession Session { get; init; }
     public ISessionState State { get; init; }
     public string? User { get; init; }
     public IReadOnlyDictionary<string, object>? Metadata { get; init; }
     public IToolActions Actions { get; init; }
 
-    public ToolContext(ISessionState state, string? user = null, IReadOnlyDictionary<string, object>? metadata = null)
+    public ToolContext(ISession session, ISessionState state, string? user = null, IReadOnlyDictionary<string, object>? metadata = null)
     {
+        Session = session;
         State = state;
         User = user;
         Metadata = metadata;
