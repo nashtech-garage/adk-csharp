@@ -49,9 +49,9 @@ public class EventAdapter : IEvent
 }
 
 /// <summary>
-/// Content adapter
+/// Content adapter (wraps Boundary.Events.Content to implement IContent port)
 /// </summary>
-internal class ContentAdapter : IContent
+public class ContentAdapter : IContent
 {
     private readonly Boundary.Events.Content _content;
 

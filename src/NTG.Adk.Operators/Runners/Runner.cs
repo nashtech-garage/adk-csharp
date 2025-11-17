@@ -9,6 +9,7 @@ using NTG.Adk.CoreAbstractions.Memory;
 using NTG.Adk.CoreAbstractions.Sessions;
 using NTG.Adk.Implementations.Compaction;
 using NTG.Adk.Implementations.Sessions;
+using NTG.Adk.Implementations.Events;
 
 namespace NTG.Adk.Operators.Runners;
 
@@ -118,6 +119,26 @@ public class Runner
                 SessionService,
                 RunConfig.EventsCompactionConfig,
                 cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Run the agent with rich content message (Boundary DTO convenience overload).
+    /// </summary>
+    public async IAsyncEnumerable<IEvent> RunAsync(
+        string userId,
+        string sessionId,
+        Boundary.Events.Content userMessage,
+        IReadOnlyDictionary<string, object>? initialState = null,
+        [System.Runtime.CompilerServices.EnumeratorCancellation]
+        CancellationToken cancellationToken = default)
+    {
+        // Convert Boundary DTO to IContent interface via adapter
+        IContent contentAdapter = new ContentAdapter(userMessage);
+
+        await foreach (var evt in RunAsync(userId, sessionId, contentAdapter, initialState, cancellationToken))
+        {
+            yield return evt;
         }
     }
 
