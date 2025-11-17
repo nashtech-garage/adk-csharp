@@ -6,8 +6,9 @@
     <Nullable>enable</Nullable>
 
     <!-- NuGet Package Metadata -->
+    <IsPackable>true</IsPackable>
     <PackageId>NTG.Adk.Boundary</PackageId>
-    <Version>1.7.0</Version>
+    <Version>1.8.0</Version>
     <Authors>NTG</Authors>
     <Company>NTG</Company>
     <Description>NTG.Adk Boundary Layer - DTOs and data contracts (Layer 1 of A.D.D V3 architecture)</Description>

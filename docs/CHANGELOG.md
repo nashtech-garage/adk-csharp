@@ -3,6 +3,84 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.0] - 2025-11-17
+
+### 🎨 **MULTIMODAL CONTENT SUPPORT (VISION/IMAGES)**
+
+Added support for vision APIs with multimodal content handling, enabling agents to process images alongside text.
+
+#### Multimodal Features
+
+- **OpenAILlm Vision Support** - Convert InlineData to base64 data URI format
+  - Automatic conversion for image content
+  - Supports all OpenAI vision-capable models (GPT-4o, GPT-4-turbo, etc.)
+  - Format: `data:{mimeType};base64,{base64Data}`
+
+- **IInvocationContext.UserMessage** - Rich content input property
+  - Added UserMessage property for multimodal input
+  - Supports IContent with mixed text and image parts
+  - Enables direct image passing to agents
+
+- **Runner.RunAsync Overload** - Accept IContent directly
+  - New overload: `RunAsync(userId, sessionId, IContent content)`
+  - Simplifies multimodal content passing
+  - Maintains backward compatibility with string input
+
+- **GeminiLlm Native Support** - Already handles InlineData
+  - No conversion needed for Gemini models
+  - Native multimodal API support
+
+#### Files Modified
+
+- `src/NTG.Adk.CoreAbstractions/Sessions/IInvocationContext.cs`
+  - Added UserMessage property
+
+- `src/NTG.Adk.Implementations/Sessions/InvocationContext.cs`
+  - Implemented UserMessage property
+
+- `src/NTG.Adk.Implementations/Models/OpenAILlm.cs`
+  - Added InlineData to base64 data URI conversion
+
+- `src/NTG.Adk.Operators/Runners/Runner.cs`
+  - Added RunAsync overload accepting IContent
+
+#### Usage Example
+
+```csharp
+// Create content with image
+var content = new Content
+{
+    Parts =
+    [
+        new Part { Text = "What's in this image?" },
+        new Part { InlineData = new InlineData
+        {
+            MimeType = "image/jpeg",
+            Data = imageBytes
+        }}
+    ]
+};
+
+// Run with multimodal input
+await foreach (var evt in runner.RunAsync("user001", "session001", content))
+{
+    // Agent can now process both text and image
+}
+```
+
+#### Architecture Compliance
+
+- ✅ **100% A.D.D V3 Compliant** - Clean layer boundaries maintained
+- ✅ **OpenAI Compatible** - Standard base64 data URI format
+- ✅ **Gemini Compatible** - Native InlineData support preserved
+
+#### Statistics
+
+- **Build**: 0 errors, 0 warnings (Clean build maintained)
+- **New Properties**: 1 (IInvocationContext.UserMessage)
+- **New Overloads**: 1 (Runner.RunAsync)
+- **Files Modified**: 4
+
 ## [1.7.0] - 2025-11-12
 
 ### 🔄 **PYTHON ADK API COMPATIBILITY**
