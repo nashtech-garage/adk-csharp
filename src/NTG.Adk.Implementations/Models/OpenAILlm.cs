@@ -190,6 +190,8 @@ public class OpenAILlm : ILlm
 
         // Build message parts
         var textParts = new List<string>();
+        var multimodalParts = new List<ChatMessageContentPart>();
+        var hasMultimodalContent = false;
         var toolCalls = new List<ChatToolCall>();
         var toolCallId = string.Empty;
 
@@ -198,6 +200,19 @@ public class OpenAILlm : ILlm
             if (part.Text != null)
             {
                 textParts.Add(part.Text);
+                multimodalParts.Add(ChatMessageContentPart.CreateTextPart(part.Text));
+            }
+
+            if (part.InlineData != null && part.MimeType != null)
+            {
+                // Image/binary data - convert to base64 data URI
+                hasMultimodalContent = true;
+                var base64Data = Convert.ToBase64String(part.InlineData);
+                var dataUri = $"data:{part.MimeType};base64,{base64Data}";
+
+                multimodalParts.Add(ChatMessageContentPart.CreateImagePart(
+                    imageUri: new Uri(dataUri)
+                ));
             }
 
             if (part.FunctionCall != null)
@@ -232,6 +247,11 @@ public class OpenAILlm : ILlm
         }
         else if (role == ChatMessageRole.User)
         {
+            // Use multimodal content if images/binary data present
+            if (hasMultimodalContent)
+            {
+                return new UserChatMessage(multimodalParts);
+            }
             return new UserChatMessage(string.Join("\n", textParts));
         }
         else if (role == ChatMessageRole.Assistant)

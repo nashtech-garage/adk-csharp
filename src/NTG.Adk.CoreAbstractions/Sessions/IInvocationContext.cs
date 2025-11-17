@@ -25,9 +25,15 @@ public interface IInvocationContext
     string Branch { get; }
 
     /// <summary>
-    /// User input for this invocation
+    /// User input for this invocation (legacy string API)
     /// </summary>
     string? UserInput { get; }
+
+    /// <summary>
+    /// User message for this invocation (rich content API - supports multimodal)
+    /// Equivalent to new_message in Python ADK
+    /// </summary>
+    Events.IContent? UserMessage { get; }
 
     /// <summary>
     /// Artifact service for file storage and versioning
@@ -64,4 +70,9 @@ public interface IInvocationContext
     /// Create a new context with different user input
     /// </summary>
     IInvocationContext WithUserInput(string newUserInput);
+
+    /// <summary>
+    /// Create a new context with different user message (rich content)
+    /// </summary>
+    IInvocationContext WithUserMessage(Events.IContent newUserMessage);
 }

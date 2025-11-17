@@ -95,6 +95,75 @@ public class Runner
             Session = session,
             Branch = "main",
             UserInput = userInput,
+            UserMessage = null,
+            ArtifactService = ArtifactService,
+            MemoryService = MemoryService,
+            RunConfig = RunConfig
+        };
+
+        // Run agent and yield events
+        await foreach (var evt in Agent.RunAsync(context, cancellationToken))
+        {
+            // Append event to session
+            await SessionService.AppendEventAsync(session, evt, cancellationToken);
+
+            yield return evt;
+        }
+
+        // Run compaction after agent finishes (Python ADK approach)
+        if (RunConfig.EventsCompactionConfig != null)
+        {
+            await CompactionService.RunCompactionIfNeededAsync(
+                session,
+                SessionService,
+                RunConfig.EventsCompactionConfig,
+                cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Run the agent with rich content message (supports multimodal - images, text, etc.).
+    /// Equivalent to run_async(new_message=...) in Python ADK.
+    /// </summary>
+    /// <param name="userId">User identifier</param>
+    /// <param name="sessionId">Session identifier (will create if doesn't exist)</param>
+    /// <param name="userMessage">Rich content message with text and/or images</param>
+    /// <param name="initialState">Initial state for new sessions</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Stream of events from agent execution</returns>
+    public async IAsyncEnumerable<IEvent> RunAsync(
+        string userId,
+        string sessionId,
+        IContent userMessage,
+        IReadOnlyDictionary<string, object>? initialState = null,
+        [System.Runtime.CompilerServices.EnumeratorCancellation]
+        CancellationToken cancellationToken = default)
+    {
+        // Get or create session
+        var session = await SessionService.GetSessionAsync(
+            AppName,
+            userId,
+            sessionId,
+            cancellationToken: cancellationToken);
+
+        if (session == null)
+        {
+            // Create new session
+            session = await SessionService.CreateSessionAsync(
+                AppName,
+                userId,
+                initialState,
+                sessionId,
+                cancellationToken);
+        }
+
+        // Create invocation context with rich content
+        var context = new InvocationContextImpl
+        {
+            Session = session,
+            Branch = "main",
+            UserInput = null,
+            UserMessage = userMessage,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig
@@ -168,6 +237,7 @@ public class Runner
             Session = session,
             Branch = "main",
             UserInput = userInput,
+            UserMessage = null,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig
@@ -204,6 +274,7 @@ internal class InvocationContextImpl : IInvocationContext
     public required ISession Session { get; init; }
     public required string Branch { get; init; }
     public string? UserInput { get; init; }
+    public IContent? UserMessage { get; init; }
     public IArtifactService? ArtifactService { get; init; }
     public IMemoryService? MemoryService { get; init; }
     public RunConfig? RunConfig { get; init; }
@@ -230,6 +301,7 @@ internal class InvocationContextImpl : IInvocationContext
             Session = Session,
             Branch = newBranch,
             UserInput = UserInput,
+            UserMessage = UserMessage,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
@@ -244,6 +316,22 @@ internal class InvocationContextImpl : IInvocationContext
             Session = Session,
             Branch = Branch,
             UserInput = newUserInput,
+            UserMessage = UserMessage,
+            ArtifactService = ArtifactService,
+            MemoryService = MemoryService,
+            RunConfig = RunConfig,
+            _numberOfLlmCalls = _numberOfLlmCalls
+        };
+    }
+
+    public IInvocationContext WithUserMessage(IContent newUserMessage)
+    {
+        return new InvocationContextImpl
+        {
+            Session = Session,
+            Branch = Branch,
+            UserInput = UserInput,
+            UserMessage = newUserMessage,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,

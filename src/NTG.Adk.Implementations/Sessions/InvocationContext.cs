@@ -4,6 +4,7 @@
 using NTG.Adk.Boundary.Exceptions;
 using NTG.Adk.CoreAbstractions.Agents;
 using NTG.Adk.CoreAbstractions.Artifacts;
+using NTG.Adk.CoreAbstractions.Events;
 using NTG.Adk.CoreAbstractions.Memory;
 using NTG.Adk.CoreAbstractions.Sessions;
 
@@ -20,6 +21,7 @@ public class InvocationContext : IInvocationContext
     public required ISession Session { get; init; }
     public required string Branch { get; init; }
     public string? UserInput { get; init; }
+    public IContent? UserMessage { get; init; }
     public IArtifactService? ArtifactService { get; init; }
     public IMemoryService? MemoryService { get; init; }
     public RunConfig? RunConfig { get; init; }
@@ -51,6 +53,7 @@ public class InvocationContext : IInvocationContext
             Session = Session,
             Branch = newBranch,
             UserInput = UserInput,
+            UserMessage = UserMessage,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
@@ -65,6 +68,22 @@ public class InvocationContext : IInvocationContext
             Session = Session,
             Branch = Branch,
             UserInput = newUserInput,
+            UserMessage = UserMessage,
+            ArtifactService = ArtifactService,
+            MemoryService = MemoryService,
+            RunConfig = RunConfig,
+            _numberOfLlmCalls = _numberOfLlmCalls
+        };
+    }
+
+    public IInvocationContext WithUserMessage(IContent newUserMessage)
+    {
+        return new InvocationContext
+        {
+            Session = Session,
+            Branch = Branch,
+            UserInput = UserInput,
+            UserMessage = newUserMessage,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
@@ -85,6 +104,7 @@ public class InvocationContext : IInvocationContext
             Session = new InMemorySession(sessionId),
             Branch = "root",
             UserInput = userInput,
+            UserMessage = null,
             RunConfig = runConfig ?? new RunConfig()
         };
     }
@@ -102,6 +122,7 @@ public class InvocationContext : IInvocationContext
             Session = session,
             Branch = "root",
             UserInput = userInput,
+            UserMessage = null,
             RunConfig = runConfig ?? new RunConfig()
         };
     }
