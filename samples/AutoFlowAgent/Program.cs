@@ -85,8 +85,10 @@ class Program
         // Add specialists as sub-agents (this enables AutoFlow routing)
         coordinator.AddSubAgents(mathSpecialist, storySpecialist, codeSpecialist);
 
-        // Create context
-        var context = InvocationContext.Create();
+        // Create context using factory
+        var factory = new InvocationContextFactory();
+        var session = new InMemorySession();
+        var context = factory.Create(session);
 
         // Demonstrate AutoFlow with different types of queries
         await RunScenario(coordinator, context, "Calculate the square root of 144 and explain the steps");

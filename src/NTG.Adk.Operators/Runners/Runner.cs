@@ -28,6 +28,7 @@ public class Runner
     public IArtifactService? ArtifactService { get; }
     public IMemoryService? MemoryService { get; }
     public RunConfig RunConfig { get; }
+    private readonly IInvocationContextFactory? _contextFactory;
 
     /// <summary>
     /// Create a new Runner instance.
@@ -38,13 +39,15 @@ public class Runner
     /// <param name="artifactService">Optional artifact service for file storage</param>
     /// <param name="memoryService">Optional memory service for long-term memory</param>
     /// <param name="runConfig">Optional run configuration (defaults to MaxLlmCalls=500)</param>
+    /// <param name="contextFactory">Optional factory for creating invocation contexts (DI pattern)</param>
     public Runner(
         IAgent agent,
         string appName,
         ISessionService sessionService,
         IArtifactService? artifactService = null,
         IMemoryService? memoryService = null,
-        RunConfig? runConfig = null)
+        RunConfig? runConfig = null,
+        IInvocationContextFactory? contextFactory = null)
     {
         Agent = agent ?? throw new ArgumentNullException(nameof(agent));
         AppName = appName ?? throw new ArgumentNullException(nameof(appName));
@@ -52,6 +55,7 @@ public class Runner
         ArtifactService = artifactService;
         MemoryService = memoryService;
         RunConfig = runConfig ?? new RunConfig();
+        _contextFactory = contextFactory;
     }
 
     /// <summary>
@@ -91,7 +95,14 @@ public class Runner
         }
 
         // Create invocation context
-        var context = new InvocationContextImpl
+        var context = _contextFactory?.Create(
+            session,
+            userInput: userInput,
+            userMessage: null,
+            artifactService: ArtifactService,
+            memoryService: MemoryService,
+            runConfig: RunConfig)
+        ?? new InvocationContext
         {
             Session = session,
             Branch = "main",
@@ -179,7 +190,14 @@ public class Runner
         }
 
         // Create invocation context with rich content
-        var context = new InvocationContextImpl
+        var context = _contextFactory?.Create(
+            session,
+            userInput: null,
+            userMessage: userMessage,
+            artifactService: ArtifactService,
+            memoryService: MemoryService,
+            runConfig: RunConfig)
+        ?? new InvocationContext
         {
             Session = session,
             Branch = "main",
@@ -253,7 +271,14 @@ public class Runner
         }
 
         // Create invocation context for continuation
-        var context = new InvocationContextImpl
+        var context = _contextFactory?.Create(
+            session,
+            userInput: userInput,
+            userMessage: null,
+            artifactService: ArtifactService,
+            memoryService: MemoryService,
+            runConfig: RunConfig)
+        ?? new InvocationContext
         {
             Session = session,
             Branch = "main",
@@ -282,81 +307,5 @@ public class Runner
                 RunConfig.EventsCompactionConfig,
                 cancellationToken);
         }
-    }
-}
-
-/// <summary>
-/// Internal implementation of IInvocationContext.
-/// </summary>
-internal class InvocationContextImpl : IInvocationContext
-{
-    private int _numberOfLlmCalls = 0;
-
-    public required ISession Session { get; init; }
-    public required string Branch { get; init; }
-    public string? UserInput { get; init; }
-    public IContent? UserMessage { get; init; }
-    public IArtifactService? ArtifactService { get; init; }
-    public IMemoryService? MemoryService { get; init; }
-    public RunConfig? RunConfig { get; init; }
-
-    public int NumberOfLlmCalls => _numberOfLlmCalls;
-
-    public void IncrementAndEnforceLlmCallsLimit()
-    {
-        _numberOfLlmCalls++;
-
-        if (RunConfig != null
-            && RunConfig.MaxLlmCalls > 0
-            && _numberOfLlmCalls > RunConfig.MaxLlmCalls)
-        {
-            throw new LlmCallsLimitExceededError(
-                $"Max number of LLM calls limit of {RunConfig.MaxLlmCalls} exceeded");
-        }
-    }
-
-    public IInvocationContext WithBranch(string newBranch)
-    {
-        return new InvocationContextImpl
-        {
-            Session = Session,
-            Branch = newBranch,
-            UserInput = UserInput,
-            UserMessage = UserMessage,
-            ArtifactService = ArtifactService,
-            MemoryService = MemoryService,
-            RunConfig = RunConfig,
-            _numberOfLlmCalls = _numberOfLlmCalls
-        };
-    }
-
-    public IInvocationContext WithUserInput(string newUserInput)
-    {
-        return new InvocationContextImpl
-        {
-            Session = Session,
-            Branch = Branch,
-            UserInput = newUserInput,
-            UserMessage = UserMessage,
-            ArtifactService = ArtifactService,
-            MemoryService = MemoryService,
-            RunConfig = RunConfig,
-            _numberOfLlmCalls = _numberOfLlmCalls
-        };
-    }
-
-    public IInvocationContext WithUserMessage(IContent newUserMessage)
-    {
-        return new InvocationContextImpl
-        {
-            Session = Session,
-            Branch = Branch,
-            UserInput = UserInput,
-            UserMessage = newUserMessage,
-            ArtifactService = ArtifactService,
-            MemoryService = MemoryService,
-            RunConfig = RunConfig,
-            _numberOfLlmCalls = _numberOfLlmCalls
-        };
     }
 }

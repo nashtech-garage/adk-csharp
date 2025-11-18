@@ -7,34 +7,14 @@ using NTG.Adk.CoreAbstractions.Tools;
 namespace NTG.Adk.Implementations.Tools;
 
 /// <summary>
-/// Implementation of IToolContext.
-/// Provides context for tool execution.
+/// Default implementation of IToolContext.
+/// Follows A.D.D V3: Adapter in Implementations layer.
 /// </summary>
 public class ToolContext : IToolContext
 {
-    public ISession Session { get; init; }
-    public ISessionState State { get; init; }
+    public required ISession Session { get; init; }
+    public required ISessionState State { get; init; }
     public string? User { get; init; }
     public IReadOnlyDictionary<string, object>? Metadata { get; init; }
-    public IToolActions Actions { get; init; }
-
-    public ToolContext(ISession session, ISessionState state, string? user = null, IReadOnlyDictionary<string, object>? metadata = null)
-    {
-        Session = session;
-        State = state;
-        User = user;
-        Metadata = metadata;
-        Actions = new ToolActions();
-    }
-}
-
-/// <summary>
-/// Implementation of IToolActions.
-/// Actions that tools can set during execution.
-/// </summary>
-public class ToolActions : IToolActions
-{
-    public string? TransferToAgent { get; set; }
-    public bool Escalate { get; set; }
-    public bool SkipSummarization { get; set; }
+    public required IToolActions Actions { get; init; }
 }

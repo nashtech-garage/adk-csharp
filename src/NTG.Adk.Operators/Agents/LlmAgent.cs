@@ -19,6 +19,7 @@ namespace NTG.Adk.Operators.Agents;
 public class LlmAgent : BaseAgent
 {
     private readonly ILlm _llm;
+    private readonly IToolContextFactory? _toolContextFactory;
 
     /// <summary>
     /// System instruction for the agent.
@@ -72,11 +73,12 @@ public class LlmAgent : BaseAgent
     /// </summary>
     public object? OutputSchema { get; init; }
 
-    public LlmAgent(ILlm llm, string model)
+    public LlmAgent(ILlm llm, string model, IToolContextFactory? toolContextFactory = null)
     {
         _llm = llm ?? throw new ArgumentNullException(nameof(llm));
         Model = model;
         Name = "llm_agent"; // Default, should be overridden
+        _toolContextFactory = toolContextFactory;
     }
 
     /// <summary>
@@ -459,12 +461,16 @@ public class LlmAgent : BaseAgent
         IInvocationContext context,
         CancellationToken cancellationToken)
     {
-        var toolActions = new ToolActionsImpl();
-        var toolContext = new ToolContextImpl
+        var toolActions = new NTG.Adk.Implementations.Tools.ToolActions();
+        var toolContext = _toolContextFactory?.Create(
+            context.Session,
+            context.Session.State,
+            actions: toolActions)
+        ?? new NTG.Adk.Implementations.Tools.ToolContext
         {
             Session = context.Session,
             State = context.Session.State,
-            User = null, // User context not available in current IInvocationContext
+            User = null,
             Actions = toolActions
         };
 
@@ -572,7 +578,7 @@ public class LlmAgent : BaseAgent
     }
 }
 
-// Internal implementation classes
+// Internal implementation classes (kept for now, will centralize in Session 2)
 internal class LlmRequestImpl : ILlmRequest
 {
     public required string? SystemInstruction { get; init; }
@@ -597,20 +603,4 @@ internal class SimplePart : IPart
     public IFunctionResponse? FunctionResponse { get; init; }
     public byte[]? InlineData { get; init; }
     public string? MimeType { get; init; }
-}
-
-internal class ToolContextImpl : IToolContext
-{
-    public required ISession Session { get; init; }
-    public required ISessionState State { get; init; }
-    public string? User { get; init; }
-    public IReadOnlyDictionary<string, object>? Metadata { get; init; }
-    public required IToolActions Actions { get; init; }
-}
-
-internal class ToolActionsImpl : IToolActions
-{
-    public string? TransferToAgent { get; set; }
-    public bool Escalate { get; set; }
-    public bool SkipSummarization { get; set; }
 }

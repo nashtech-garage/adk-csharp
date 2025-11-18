@@ -3,6 +3,7 @@
 
 using NTG.Adk.CoreAbstractions.Agents;
 using NTG.Adk.CoreAbstractions.Events;
+using NTG.Adk.CoreAbstractions.Sessions;
 using NTG.Adk.Implementations.Sessions;
 
 namespace NTG.Adk.Bootstrap;
@@ -15,10 +16,12 @@ namespace NTG.Adk.Bootstrap;
 public class Runner
 {
     private readonly IAgent _agent;
+    private readonly IInvocationContextFactory _contextFactory;
 
-    public Runner(IAgent agent)
+    public Runner(IAgent agent, IInvocationContextFactory? contextFactory = null)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+        _contextFactory = contextFactory ?? new InvocationContextFactory();
     }
 
     /// <summary>
@@ -29,7 +32,8 @@ public class Runner
         string? sessionId = null,
         CancellationToken cancellationToken = default)
     {
-        var context = InvocationContext.Create(sessionId, userInput);
+        var session = new InMemorySession(sessionId);
+        var context = _contextFactory.Create(session, userInput: userInput);
 
         var finalText = new System.Text.StringBuilder();
 
@@ -60,7 +64,8 @@ public class Runner
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
-        var context = InvocationContext.Create(sessionId, userInput);
+        var session = new InMemorySession(sessionId);
+        var context = _contextFactory.Create(session, userInput: userInput);
 
         await foreach (var evt in _agent.RunAsync(context, cancellationToken))
         {

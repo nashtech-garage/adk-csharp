@@ -63,7 +63,8 @@ var storyFlowAgent = new StoryFlowAgentExample(
 var session = new InMemorySession();
 session.State.Set("topic", "a brave kitten exploring a haunted house");
 
-var context = InvocationContext.Create(session, "Generate a story about the topic in state");
+var factory = new InvocationContextFactory();
+var context = factory.Create(session, userInput: "Generate a story about the topic in state");
 
 // Run workflow
 Console.WriteLine("Starting workflow...\n");

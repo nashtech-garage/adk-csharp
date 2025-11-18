@@ -11,8 +11,8 @@ using NTG.Adk.CoreAbstractions.Sessions;
 namespace NTG.Adk.Implementations.Sessions;
 
 /// <summary>
-/// Implementation of IInvocationContext.
-/// Includes LLM call tracking for enforcement.
+/// Default implementation of IInvocationContext.
+/// Follows A.D.D V3: Adapter in Implementations layer.
 /// </summary>
 public class InvocationContext : IInvocationContext
 {
@@ -28,11 +28,6 @@ public class InvocationContext : IInvocationContext
 
     public int NumberOfLlmCalls => _numberOfLlmCalls;
 
-    /// <summary>
-    /// Increment LLM call counter and enforce limit.
-    /// Throws LlmCallsLimitExceededError if limit exceeded.
-    /// Equivalent to increment_and_enforce_llm_calls_limit in Python ADK.
-    /// </summary>
     public void IncrementAndEnforceLlmCallsLimit()
     {
         _numberOfLlmCalls++;
@@ -88,42 +83,6 @@ public class InvocationContext : IInvocationContext
             MemoryService = MemoryService,
             RunConfig = RunConfig,
             _numberOfLlmCalls = _numberOfLlmCalls
-        };
-    }
-
-    /// <summary>
-    /// Create initial context
-    /// </summary>
-    public static InvocationContext Create(
-        string? sessionId = null,
-        string? userInput = null,
-        RunConfig? runConfig = null)
-    {
-        return new InvocationContext
-        {
-            Session = new InMemorySession(sessionId),
-            Branch = "root",
-            UserInput = userInput,
-            UserMessage = null,
-            RunConfig = runConfig ?? new RunConfig()
-        };
-    }
-
-    /// <summary>
-    /// Create with existing session
-    /// </summary>
-    public static InvocationContext Create(
-        ISession session,
-        string? userInput = null,
-        RunConfig? runConfig = null)
-    {
-        return new InvocationContext
-        {
-            Session = session,
-            Branch = "root",
-            UserInput = userInput,
-            UserMessage = null,
-            RunConfig = runConfig ?? new RunConfig()
         };
     }
 }
