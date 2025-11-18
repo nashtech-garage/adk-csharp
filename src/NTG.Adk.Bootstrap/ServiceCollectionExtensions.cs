@@ -18,11 +18,22 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Register all ADK services and factories.
     /// </summary>
-    public static IServiceCollection AddAdk(this IServiceCollection services)
+    /// <param name="services">Service collection</param>
+    /// <param name="usePooling">Enable object pooling for performance (default: true)</param>
+    public static IServiceCollection AddAdk(this IServiceCollection services, bool usePooling = true)
     {
-        // Register factories
-        services.AddSingleton<IInvocationContextFactory, InvocationContextFactory>();
-        services.AddSingleton<IToolContextFactory, ToolContextFactory>();
+        if (usePooling)
+        {
+            // Register pooled factories for better performance
+            services.AddSingleton<IInvocationContextFactory, PooledInvocationContextFactory>();
+            services.AddSingleton<IToolContextFactory, PooledToolContextFactory>();
+        }
+        else
+        {
+            // Register standard factories
+            services.AddSingleton<IInvocationContextFactory, InvocationContextFactory>();
+            services.AddSingleton<IToolContextFactory, ToolContextFactory>();
+        }
 
         return services;
     }

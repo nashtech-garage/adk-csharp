@@ -3,6 +3,7 @@
 
 using NTG.Adk.CoreAbstractions.Models;
 using NTG.Adk.CoreAbstractions.Tools;
+using NTG.Adk.Operators.Internal;
 
 namespace NTG.Adk.Operators.Agents;
 
