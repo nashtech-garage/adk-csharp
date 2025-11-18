@@ -17,4 +17,5 @@ public class ToolContext : IToolContext
     public string? User { get; init; }
     public IReadOnlyDictionary<string, object>? Metadata { get; init; }
     public required IToolActions Actions { get; init; }
+    public Func<string, Task>? StreamOutputAsync { get; init; }
 }

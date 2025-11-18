@@ -28,6 +28,7 @@ public sealed class PooledToolContext : IToolContext, IDisposable
     public string? User => _context.User;
     public IReadOnlyDictionary<string, object>? Metadata => _context.Metadata;
     public IToolActions Actions => _context.Actions;
+    public Func<string, Task>? StreamOutputAsync => _context.StreamOutputAsync;
 
     public void Dispose()
     {

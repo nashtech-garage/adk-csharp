@@ -30,7 +30,8 @@ public class PooledInvocationContextFactory : IInvocationContextFactory
         IContent? userMessage = null,
         IArtifactService? artifactService = null,
         IMemoryService? memoryService = null,
-        RunConfig? runConfig = null)
+        RunConfig? runConfig = null,
+        IReadOnlyDictionary<string, object>? metadata = null)
     {
         var context = _pool.Get();
 
@@ -48,7 +49,8 @@ public class PooledInvocationContextFactory : IInvocationContextFactory
             UserMessage = userMessage,
             ArtifactService = artifactService,
             MemoryService = memoryService,
-            RunConfig = runConfig ?? new RunConfig()
+            RunConfig = runConfig ?? new RunConfig(),
+            Metadata = metadata
         };
 
         _pool.Return(context);

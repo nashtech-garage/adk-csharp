@@ -25,6 +25,7 @@ public class InvocationContext : IInvocationContext
     public IArtifactService? ArtifactService { get; init; }
     public IMemoryService? MemoryService { get; init; }
     public RunConfig? RunConfig { get; init; }
+    public IReadOnlyDictionary<string, object>? Metadata { get; init; }
 
     public int NumberOfLlmCalls => _numberOfLlmCalls;
 
@@ -52,6 +53,7 @@ public class InvocationContext : IInvocationContext
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
+            Metadata = Metadata,
             _numberOfLlmCalls = _numberOfLlmCalls
         };
     }
@@ -67,6 +69,7 @@ public class InvocationContext : IInvocationContext
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
+            Metadata = Metadata,
             _numberOfLlmCalls = _numberOfLlmCalls
         };
     }
@@ -82,6 +85,7 @@ public class InvocationContext : IInvocationContext
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
+            Metadata = Metadata,
             _numberOfLlmCalls = _numberOfLlmCalls
         };
     }

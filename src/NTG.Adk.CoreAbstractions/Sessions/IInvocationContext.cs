@@ -51,6 +51,11 @@ public interface IInvocationContext
     RunConfig? RunConfig { get; }
 
     /// <summary>
+    /// Additional metadata for this invocation (e.g., streaming callbacks)
+    /// </summary>
+    IReadOnlyDictionary<string, object>? Metadata { get; }
+
+    /// <summary>
     /// Number of LLM calls made in this invocation
     /// </summary>
     int NumberOfLlmCalls { get; }

@@ -24,6 +24,7 @@ public interface IInvocationContextFactory
     /// <param name="artifactService">Optional artifact service</param>
     /// <param name="memoryService">Optional memory service</param>
     /// <param name="runConfig">Optional run configuration</param>
+    /// <param name="metadata">Optional metadata (e.g., streaming callbacks)</param>
     /// <returns>A new invocation context instance</returns>
     IInvocationContext Create(
         ISession session,
@@ -31,5 +32,6 @@ public interface IInvocationContextFactory
         IContent? userMessage = null,
         IArtifactService? artifactService = null,
         IMemoryService? memoryService = null,
-        RunConfig? runConfig = null);
+        RunConfig? runConfig = null,
+        IReadOnlyDictionary<string, object>? metadata = null);
 }

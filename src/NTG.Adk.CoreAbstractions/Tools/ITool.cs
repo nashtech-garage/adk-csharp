@@ -105,6 +105,13 @@ public interface IToolContext
     /// Tools can set actions.TransferTo to transfer to another agent.
     /// </summary>
     IToolActions Actions { get; }
+
+    /// <summary>
+    /// Optional streaming callback for partial output.
+    /// Tools can call this to report incremental results (e.g., bash output lines).
+    /// If null, tool should buffer and return final result only.
+    /// </summary>
+    Func<string, Task>? StreamOutputAsync { get; }
 }
 
 /// <summary>

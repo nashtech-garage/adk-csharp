@@ -33,6 +33,7 @@ public sealed class PooledInvocationContext : IInvocationContext, IDisposable
     public IArtifactService? ArtifactService => _context.ArtifactService;
     public IMemoryService? MemoryService => _context.MemoryService;
     public RunConfig? RunConfig => _context.RunConfig;
+    public IReadOnlyDictionary<string, object>? Metadata => _context.Metadata;
     public int NumberOfLlmCalls => _context.NumberOfLlmCalls;
 
     public void IncrementAndEnforceLlmCallsLimit() => _context.IncrementAndEnforceLlmCallsLimit();

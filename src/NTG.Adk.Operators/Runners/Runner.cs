@@ -66,6 +66,7 @@ public class Runner
     /// <param name="sessionId">Session identifier (will create if doesn't exist)</param>
     /// <param name="userInput">User input to process</param>
     /// <param name="initialState">Initial state for new sessions</param>
+    /// <param name="metadata">Optional metadata for invocation (e.g., streaming callbacks)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Stream of events from agent execution</returns>
     public async IAsyncEnumerable<IEvent> RunAsync(
@@ -73,6 +74,7 @@ public class Runner
         string sessionId,
         string? userInput = null,
         IReadOnlyDictionary<string, object>? initialState = null,
+        IReadOnlyDictionary<string, object>? metadata = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
@@ -101,7 +103,8 @@ public class Runner
             userMessage: null,
             artifactService: ArtifactService,
             memoryService: MemoryService,
-            runConfig: RunConfig)
+            runConfig: RunConfig,
+            metadata: metadata)
         ?? new InvocationContext
         {
             Session = session,
@@ -110,7 +113,8 @@ public class Runner
             UserMessage = null,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
-            RunConfig = RunConfig
+            RunConfig = RunConfig,
+            Metadata = metadata
         };
 
         // Run agent and yield events
@@ -141,13 +145,14 @@ public class Runner
         string sessionId,
         Boundary.Events.Content userMessage,
         IReadOnlyDictionary<string, object>? initialState = null,
+        IReadOnlyDictionary<string, object>? metadata = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
         // Convert Boundary DTO to IContent interface via adapter
         IContent contentAdapter = new ContentAdapter(userMessage);
 
-        await foreach (var evt in RunAsync(userId, sessionId, contentAdapter, initialState, cancellationToken))
+        await foreach (var evt in RunAsync(userId, sessionId, contentAdapter, initialState, metadata, cancellationToken))
         {
             yield return evt;
         }
@@ -161,6 +166,7 @@ public class Runner
     /// <param name="sessionId">Session identifier (will create if doesn't exist)</param>
     /// <param name="userMessage">Rich content message with text and/or images</param>
     /// <param name="initialState">Initial state for new sessions</param>
+    /// <param name="metadata">Optional metadata for invocation (e.g., streaming callbacks)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Stream of events from agent execution</returns>
     public async IAsyncEnumerable<IEvent> RunAsync(
@@ -168,6 +174,7 @@ public class Runner
         string sessionId,
         IContent userMessage,
         IReadOnlyDictionary<string, object>? initialState = null,
+        IReadOnlyDictionary<string, object>? metadata = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
@@ -196,7 +203,8 @@ public class Runner
             userMessage: userMessage,
             artifactService: ArtifactService,
             memoryService: MemoryService,
-            runConfig: RunConfig)
+            runConfig: RunConfig,
+            metadata: metadata)
         ?? new InvocationContext
         {
             Session = session,
@@ -205,7 +213,8 @@ public class Runner
             UserMessage = userMessage,
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
-            RunConfig = RunConfig
+            RunConfig = RunConfig,
+            Metadata = metadata
         };
 
         // Run agent and yield events

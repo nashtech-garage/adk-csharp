@@ -463,6 +463,23 @@ public class LlmAgent : BaseAgent
         CancellationToken cancellationToken)
     {
         var toolActions = new NTG.Adk.Implementations.Tools.ToolActions();
+
+        // Extract streaming callback from context metadata if available
+        // Wrap it to include tool call ID in metadata
+        Func<string, Task>? streamCallback = null;
+        if (context.Metadata != null &&
+            context.Metadata.TryGetValue("StreamOutputCallback", out var callbackObj) &&
+            callbackObj is Func<string, Task> callback)
+        {
+            // Wrap callback to include tool ID for UI association
+            var toolId = functionCall.Id ?? functionCall.Name;
+            streamCallback = async (chunk) =>
+            {
+                // Call original callback - UI layer will handle tool ID association
+                await callback(chunk);
+            };
+        }
+
         var toolContext = _toolContextFactory?.Create(
             context.Session,
             context.Session.State,
@@ -472,7 +489,8 @@ public class LlmAgent : BaseAgent
             Session = context.Session,
             State = context.Session.State,
             User = null,
-            Actions = toolActions
+            Actions = toolActions,
+            StreamOutputAsync = streamCallback
         };
 
         var args = functionCall.Args ?? new Dictionary<string, object>();

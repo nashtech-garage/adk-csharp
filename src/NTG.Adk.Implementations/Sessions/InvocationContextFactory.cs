@@ -21,7 +21,8 @@ public class InvocationContextFactory : IInvocationContextFactory
         IContent? userMessage = null,
         IArtifactService? artifactService = null,
         IMemoryService? memoryService = null,
-        RunConfig? runConfig = null)
+        RunConfig? runConfig = null,
+        IReadOnlyDictionary<string, object>? metadata = null)
     {
         return new InvocationContext
         {
@@ -31,7 +32,8 @@ public class InvocationContextFactory : IInvocationContextFactory
             UserMessage = userMessage,
             ArtifactService = artifactService,
             MemoryService = memoryService,
-            RunConfig = runConfig ?? new RunConfig()
+            RunConfig = runConfig ?? new RunConfig(),
+            Metadata = metadata
         };
     }
 }
