@@ -9,7 +9,7 @@ NTG.Adk is a production-ready C# implementation of Google's Agent Development Ki
 with 99% feature parity with Python ADK. Built using A.D.D V3 (Abstract Driven
 Development) architecture with strict five-layer separation.
 
-Version: 1.7.0
+Version: 1.8.2
 Target: .NET 8.0 LTS (supported until Nov 2026)
 License: Apache 2.0
 Repository: https://github.com/ntg/adk-csharp
@@ -1854,10 +1854,10 @@ License: Apache 2.0
 VERSION INFORMATION
 ================================================================================
 
-NTG.Adk Version: 1.7.0
+NTG.Adk Version: 1.8.2
 .NET Target: 8.0 LTS (until Nov 2026)
 Python ADK Parity: 99%
 Production Ready: Yes
-Last Updated: 2025-11-12
+Last Updated: 2025-11-18
 
 ================================================================================

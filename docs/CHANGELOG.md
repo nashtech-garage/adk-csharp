@@ -3,6 +3,57 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.2] - 2025-11-18
+
+### 🔄 **TOOL OUTPUT STREAMING**
+
+Add callback infrastructure for tools to report incremental output during execution.
+
+#### Streaming Features
+
+- **IToolContext.StreamOutputAsync** - Callback property for streaming tool output
+  - Tools can report progress and intermediate results
+  - Async callback: `Func<string, Task>? StreamOutputAsync`
+  - Optional - tools without streaming continue to work normally
+
+- **IInvocationContext.Metadata** - Pass streaming callbacks through execution chain
+  - Dictionary<string, object> for extensible metadata
+  - Runner extracts callbacks and forwards to tools via context
+  - Enables UI/CLI to receive real-time tool output
+
+- **Runner.RunAsync Metadata** - New parameter for streaming control
+  - Optional metadata parameter on all RunAsync overloads
+  - Pass streaming callbacks from caller to tools
+  - Backward compatible - existing code works without changes
+
+- **LlmAgent Integration** - Automatic callback forwarding
+  - Extract "toolOutputCallback" from invocation metadata
+  - Forward to IToolContext.StreamOutputAsync
+  - No tool code changes needed for streaming support
+
+#### Files Modified
+
+- `src/NTG.Adk.CoreAbstractions/Sessions/IInvocationContext.cs`
+- `src/NTG.Adk.CoreAbstractions/Sessions/IInvocationContextFactory.cs`
+- `src/NTG.Adk.CoreAbstractions/Tools/ITool.cs`
+- `src/NTG.Adk.Implementations/Sessions/InvocationContext.cs`
+- `src/NTG.Adk.Implementations/Sessions/InvocationContextFactory.cs`
+- `src/NTG.Adk.Implementations/Sessions/PooledInvocationContext.cs`
+- `src/NTG.Adk.Implementations/Sessions/PooledInvocationContextFactory.cs`
+- `src/NTG.Adk.Implementations/Tools/PooledToolContext.cs`
+- `src/NTG.Adk.Implementations/Tools/ToolContext.cs`
+- `src/NTG.Adk.Operators/A2A/A2aAgentExecutor.cs`
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs`
+- `src/NTG.Adk.Operators/Runners/Runner.cs`
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - StreamOutputAsync is optional on IToolContext
+  - Metadata parameter is optional on RunAsync methods
+  - Existing tools and callers work without modification
+
+
 ## [1.8.1] - 2025-11-18
 
 ### 🚀 **PERFORMANCE + A.D.D V3 COMPLIANCE**
