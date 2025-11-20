@@ -398,8 +398,13 @@ public class LlmAgent : BaseAgent
             }
         }
 
-        // Add current user input if not already in events
-        if (context.UserInput != null)
+        // Add current user message (multimodal: text + images support)
+        if (context.UserMessage != null)
+        {
+            contents.Add(context.UserMessage);
+        }
+        // Add current user input (text-only legacy support)
+        else if (context.UserInput != null)
         {
             // Check if last event is current user input
             var needToAdd = true;

@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.3] - 2025-11-20
+
+### 🔧 **MULTIMODAL CONTENT FIX**
+
+Fix LlmAgent to properly handle multimodal user messages (text + images).
+
+#### Bug Fix
+
+- **LlmAgent.BuildContents** - Check UserMessage before UserInput
+  - Fixed issue where multimodal content (IContent with images) was ignored
+  - BuildContents() now checks context.UserMessage first (multimodal support)
+  - Falls back to context.UserInput for text-only legacy support
+  - Resolves "at least one message is required" error when sending images
+
+#### Files Modified
+
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs`
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - Existing text-only calls continue to work via UserInput fallback
+
+
 ## [1.8.2] - 2025-11-18
 
 ### 🔄 **TOOL OUTPUT STREAMING**
