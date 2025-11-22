@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.4] - 2025-11-22
+
+### 🛑 **TOOL EXECUTION INTERRUPT HANDLING**
+
+Add graceful handling for user-interrupted tool execution (e.g., ESC key press).
+
+#### Interrupt Features
+
+- **OperationCanceledException Handling** - LlmAgent catches tool cancellation
+  - Tools can be interrupted via CancellationToken
+  - Returns `{ interrupted: true, error: "Execution cancelled by user" }`
+  - Prevents exception propagation to UI layer
+  - Allows graceful cleanup and state preservation
+
+- **User Experience** - Smooth interruption flow
+  - User presses ESC during long-running tool execution
+  - Tool receives cancellation signal and stops
+  - LLM receives clear interruption message
+  - Agent continues with next action or user input
+
+#### Files Modified
+
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs`
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - Existing tools continue to work normally
+  - Interruption is optional via CancellationToken
+
+
 ## [1.8.3] - 2025-11-20
 
 ### 🔧 **MULTIMODAL CONTENT FIX**
