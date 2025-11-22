@@ -505,6 +505,11 @@ public class LlmAgent : BaseAgent
             var result = await tool.ExecuteAsync(args, toolContext, cancellationToken);
             return (result, toolActions);
         }
+        catch (OperationCanceledException)
+        {
+            // Tool execution was interrupted (e.g., user pressed ESC)
+            return (new { interrupted = true, error = "Execution cancelled by user" }, toolActions);
+        }
         catch (Exception ex)
         {
             return (new { error = ex.Message }, toolActions);
