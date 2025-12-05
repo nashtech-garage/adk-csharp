@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.5] - 2025-12-05
+
+### 🌊 **STREAMING API SUPPORT**
+
+Add RunConfig support to InMemoryRunner for enabling LLM streaming mode.
+
+#### Streaming Features
+
+- **InMemoryRunner RunConfig** - Optional parameter for streaming configuration
+  - Added `runConfig` parameter to InMemoryRunner constructor
+  - Enables `StreamingMode.Sse` for real-time LLM response streaming
+  - Pass `new RunConfig { StreamingMode = StreamingMode.Sse }` to enable
+  - API calls now include `stream: true` when SSE mode is enabled
+
+- **Usage** - Enable streaming in your application
+  ```csharp
+  var runConfig = new RunConfig { StreamingMode = StreamingMode.Sse };
+  var runner = new InMemoryRunner(agent, "MyApp", runConfig);
+  ```
+
+#### Files Modified
+
+- `src/NTG.Adk.Operators/Runners/InMemoryRunner.cs`
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - RunConfig parameter is optional (defaults to null → StreamingMode.None)
+  - Existing code works without modification
+
+
 ## [1.8.4] - 2025-11-22
 
 ### 🛑 **TOOL EXECUTION INTERRUPT HANDLING**

@@ -23,15 +23,18 @@ public class InMemoryRunner : Runner
     /// </summary>
     /// <param name="agent">The root agent to execute</param>
     /// <param name="appName">Application name (defaults to "InMemoryRunner")</param>
+    /// <param name="runConfig">Optional run configuration (streaming mode, max LLM calls)</param>
     public InMemoryRunner(
         IAgent agent,
-        string? appName = null)
+        string? appName = null,
+        RunConfig? runConfig = null)
         : base(
             agent: agent,
             appName: appName ?? "InMemoryRunner",
             sessionService: new InMemorySessionService(),
             artifactService: new InMemoryArtifactService(),
-            memoryService: new InMemoryMemoryService())
+            memoryService: new InMemoryMemoryService(),
+            runConfig: runConfig)
     {
     }
 
