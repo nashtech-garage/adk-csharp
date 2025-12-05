@@ -15,6 +15,11 @@ public record Part
     public string? Text { get; init; }
 
     /// <summary>
+    /// Reasoning/thinking content (for models like DeepSeek R1, OpenAI o1/o3)
+    /// </summary>
+    public string? Reasoning { get; init; }
+
+    /// <summary>
     /// Function call
     /// </summary>
     public FunctionCall? FunctionCall { get; init; }

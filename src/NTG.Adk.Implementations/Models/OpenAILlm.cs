@@ -393,9 +393,17 @@ public class OpenAILlm : ILlm
     {
         var parts = new List<IPart>();
 
-        // Add text parts
+        // Add text and reasoning parts
         foreach (var content in update.ContentUpdate)
         {
+            // Check for reasoning content (DeepSeek R1, OpenAI o1/o3)
+            // OpenAI SDK exposes reasoning via the Kind property or dedicated fields
+            var reasoning = GetReasoningContent(content);
+            if (!string.IsNullOrEmpty(reasoning))
+            {
+                parts.Add(new SimplePart { Reasoning = reasoning });
+            }
+            
             if (!string.IsNullOrEmpty(content.Text))
             {
                 parts.Add(new SimplePart { Text = content.Text });
@@ -416,6 +424,49 @@ public class OpenAILlm : ILlm
             Role = "model",
             Parts = parts
         };
+    }
+    
+    /// <summary>
+    /// Extract reasoning content from ChatMessageContentPart.
+    /// OpenAI reasoning models (o1, o3) and compatible APIs (DeepSeek R1) 
+    /// may include reasoning in various ways depending on SDK version.
+    /// </summary>
+    private static string? GetReasoningContent(ChatMessageContentPart content)
+    {
+        // Try to access reasoning via reflection (for newer SDK versions)
+        // The OpenAI SDK may expose reasoning as a property or via Kind
+        try
+        {
+            // Check if this is a reasoning part by examining available properties
+            var type = content.GetType();
+            
+            // Try "Reasoning" property (if SDK adds it)
+            var reasoningProp = type.GetProperty("Reasoning");
+            if (reasoningProp != null)
+            {
+                var value = reasoningProp.GetValue(content) as string;
+                if (!string.IsNullOrEmpty(value))
+                    return value;
+            }
+            
+            // Try "Kind" property to check if it's a reasoning chunk
+            var kindProp = type.GetProperty("Kind");
+            if (kindProp != null)
+            {
+                var kind = kindProp.GetValue(content)?.ToString();
+                if (kind?.Contains("Reasoning", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    // If it's marked as reasoning, the Text might contain the reasoning
+                    return content.Text;
+                }
+            }
+        }
+        catch
+        {
+            // Reflection failed, skip
+        }
+        
+        return null;
     }
 
     private IUsageMetadata? ConvertUsage(ChatTokenUsage? usage)

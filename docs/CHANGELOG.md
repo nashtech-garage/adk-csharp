@@ -3,6 +3,49 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.6] - 2025-12-05
+
+### 🧠 **REASONING CONTENT SUPPORT**
+
+Add support for chain-of-thought reasoning content from advanced LLM models (DeepSeek R1, OpenAI o1/o3).
+
+#### Reasoning Features
+
+- **IPart.Reasoning** - New property for model reasoning/thinking output
+  - Added `Reasoning` property to IPart interface (CoreAbstractions)
+  - Added `Reasoning` property to Part record (Boundary)
+  - Enables separate streaming of reasoning vs answer content
+  - Compatible with DeepSeek R1, OpenAI o1/o3, and future reasoning models
+
+- **OpenAILlm Reasoning Extraction** - Runtime detection of reasoning content
+  - Added `GetReasoningContent()` method with reflection-based detection
+  - Checks for SDK `Reasoning` property or `Kind` property indicating reasoning
+  - Future-proof for when OpenAI SDK adds native reasoning support
+
+#### Bug Fixes
+
+- **Fixed .gitignore blocking Artifacts folder** - Critical build fix
+  - Changed `/artifacts/` rule from `artifacts/` to only match root folder
+  - Previously blocked `src/NTG.Adk.CoreAbstractions/Artifacts/` from being tracked
+  - Fixes "Artifacts namespace not found" build errors
+
+#### Files Modified
+
+- `src/NTG.Adk.CoreAbstractions/Events/IEvent.cs` - Added Reasoning to IPart
+- `src/NTG.Adk.Boundary/Events/Part.cs` - Added Reasoning property
+- `src/NTG.Adk.Implementations/Events/EventAdapter.cs` - Added Reasoning to PartAdapter
+- `src/NTG.Adk.Implementations/Models/OpenAILlm.cs` - Added reasoning extraction
+- `src/NTG.Adk.Implementations/Models/GeminiLlm.cs` - Added Reasoning to SimplePart
+- `src/NTG.Adk.Implementations/Tools/Retrieval/AgenticFilesRetrievalTool.cs` - Added Reasoning to SimplePart
+- `src/NTG.Adk.Operators/Internal/LlmRequestTypes.cs` - Added Reasoning to SimplePart
+- `.gitignore` - Fixed artifacts/ rule
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - Reasoning property is nullable, existing code works unchanged
+
+
 ## [1.8.5] - 2025-12-05
 
 ### 🌊 **STREAMING API SUPPORT**

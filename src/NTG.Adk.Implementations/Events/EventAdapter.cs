@@ -77,6 +77,7 @@ internal class PartAdapter : IPart
     }
 
     public string? Text => _part.Text;
+    public string? Reasoning => _part.Reasoning;
     public IFunctionCall? FunctionCall => _part.FunctionCall != null ? new FunctionCallAdapter(_part.FunctionCall) : null;
     public IFunctionResponse? FunctionResponse => _part.FunctionResponse != null ? new FunctionResponseAdapter(_part.FunctionResponse) : null;
     public byte[]? InlineData => _part.InlineData;

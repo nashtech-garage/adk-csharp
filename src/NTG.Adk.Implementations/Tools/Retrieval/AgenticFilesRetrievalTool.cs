@@ -495,6 +495,7 @@ internal class SimpleContent : IContent
 internal class SimplePart : IPart
 {
     public string? Text { get; init; }
+    public string? Reasoning => null;
     public IFunctionCall? FunctionCall => null;
     public IFunctionResponse? FunctionResponse => null;
     public byte[]? InlineData => null;

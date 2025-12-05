@@ -66,6 +66,7 @@ public interface IContent
 public interface IPart
 {
     string? Text { get; }
+    string? Reasoning { get; }
     IFunctionCall? FunctionCall { get; }
     IFunctionResponse? FunctionResponse { get; }
     byte[]? InlineData { get; }
