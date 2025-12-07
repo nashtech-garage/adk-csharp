@@ -190,7 +190,27 @@ public class LlmAgent : BaseAgent
                             }
                         }
                     }
-                    else if (!string.IsNullOrEmpty(response.Text))
+
+                    // Check for reasoning content in Parts (interleaved thinking)
+                    if (response.Content?.Parts != null)
+                    {
+                        foreach (var part in response.Content.Parts)
+                        {
+                            if (!string.IsNullOrEmpty(part.Reasoning))
+                            {
+                                var reasoningEvent = new Event
+                                {
+                                    Author = Name,
+                                    Content = Boundary.Events.Content.FromReasoning(part.Reasoning, "model"),
+                                    Partial = true
+                                };
+                                yield return CreateEvent(reasoningEvent);
+                            }
+                        }
+                    }
+
+                    // Check for text content
+                    if (!string.IsNullOrEmpty(response.Text))
                     {
                         // Stream text chunks in real-time
                         finalText.Append(response.Text);

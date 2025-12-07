@@ -45,6 +45,11 @@ public record Part
     public static Part FromText(string text) => new() { Text = text };
 
     /// <summary>
+    /// Create a reasoning part
+    /// </summary>
+    public static Part FromReasoning(string reasoning) => new() { Reasoning = reasoning };
+
+    /// <summary>
     /// Create a function call part
     /// </summary>
     public static Part FromFunctionCall(FunctionCall functionCall) => new() { FunctionCall = functionCall };

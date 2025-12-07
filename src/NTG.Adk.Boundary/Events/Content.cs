@@ -36,4 +36,13 @@ public record Content
         Role = role,
         Parts = [Part.FromFunctionCall(functionCall)]
     };
+
+    /// <summary>
+    /// Create content with a reasoning part
+    /// </summary>
+    public static Content FromReasoning(string reasoning, string? role = null) => new()
+    {
+        Role = role,
+        Parts = [Part.FromReasoning(reasoning)]
+    };
 }

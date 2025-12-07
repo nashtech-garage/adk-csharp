@@ -1,0 +1,31 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# C# files
+*.cs text diff=csharp
+*.csproj text
+*.sln text
+
+# Markdown
+*.md text
+
+# Config files
+*.json text
+*.xml text
+*.config text
+
+# Scripts
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.dll binary
+*.exe binary
+*.nupkg binary

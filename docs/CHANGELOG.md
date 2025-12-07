@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.7] - 2025-12-07
+
+### 🧠 **INTERLEAVED THINKING SUPPORT**
+
+Stream reasoning content during multi-turn tool execution (interleaved thinking).
+
+#### Streaming Reasoning in Agentic Loop
+
+- **LlmAgent Reasoning Streaming** - Yield reasoning chunks during tool execution
+  - Check `response.Content.Parts` for reasoning content in streaming loop
+  - Yield reasoning events with `Partial = true` for real-time display
+  - Works with any model that returns reasoning tokens (DeepSeek R1, OpenAI o1/o3, Claude with extended thinking)
+  - Backward compatible: no-op if model does not return reasoning
+
+- **Helper Methods** - Convenience factories for reasoning content
+  - Added `Part.FromReasoning(string)` factory method
+  - Added `Content.FromReasoning(string, string?)` factory method
+  - Consistent API with existing `FromText()` pattern
+
+#### Files Modified
+
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs` - Added reasoning check in streaming loop
+- `src/NTG.Adk.Boundary/Events/Part.cs` - Added FromReasoning() factory
+- `src/NTG.Adk.Boundary/Events/Content.cs` - Added FromReasoning() factory
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - Reasoning streaming is automatic if model provides it
+  - No API changes required for existing code
+
+
 ## [1.8.6] - 2025-12-05
 
 ### 🧠 **REASONING CONTENT SUPPORT**
