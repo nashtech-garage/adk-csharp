@@ -410,9 +410,9 @@ public class LlmAgent : BaseAgent
             if (evt.Content == null || evt.Content.Parts == null || evt.Content.Parts.Count == 0)
                 continue;
 
-            // Include user/model content
+            // Include user/model/tool content (tool results must be included for API compliance)
             var role = evt.Content.Role;
-            if (role == "user" || role == "model")
+            if (role == "user" || role == "model" || role == "tool")
             {
                 contents.Add(evt.Content);
             }
