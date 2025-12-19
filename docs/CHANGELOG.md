@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 
 
+## [1.8.8] - 2025-12-18
+
+### 🐛 **BUG FIX: Tool Results Included in Message History**
+
+Fix critical bug where tool results were excluded from conversation history, causing HTTP 400 errors from Claude API.
+
+#### Bug Fix
+
+- **LlmAgent.BuildContents() - Include tool role** - Fixed message history to include tool results
+  - Changed condition from `if (role == "user" || role == "model")` to include `|| role == "tool"`
+  - Tool results created with `role = "tool"` were previously excluded from BuildContents()
+  - This caused requests with tool_calls to be sent without matching tool_results
+  - Claude API rejected with error: "tool_use ids were found without tool_result blocks immediately after"
+  - Now properly includes all user, model, and tool messages in conversation history
+
+#### Files Modified
+
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs` (line 415) - Added `|| role == "tool"` to BuildContents() condition
+
+#### Breaking Changes
+
+- **NONE** - 100% backward compatible
+  - Fixes broken behavior, no API changes
+
+
 ## [1.8.7] - 2025-12-07
 
 ### 🧠 **INTERLEAVED THINKING SUPPORT**
