@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 
 
+
+## [1.8.9] - 2026-02-10
+
+### 🔄 **PYTHON ADK SYNC**
+
+Ported critical fixes and improvements from `adk-python` (up to commit `663cb75`).
+
+#### Function Call & Invocation Tracking
+
+- **Fixed Function Call ID Preserving** - Critical for modern LLMs
+  - `LlmAgent` now preserves `FunctionCall.Id` and `FunctionResponse.Id` in events.
+  - Ensures correct mapping between tool calls and results, preventing LLM errors.
+  - Fixes `adk-python` issue #4381 (commit `663cb75`).
+
+- **Invocation ID Tracking**
+  - Added `InvocationId` to `IInvocationContext` and `Runner`.
+  - Ensures accurate request tracing and event correlation across agents.
+  - Aligns with `adk-python` `d2dba27`.
+
+#### Files Modified
+
+- `src/NTG.Adk.CoreAbstractions/Sessions/IInvocationContext.cs` - Added `InvocationId`
+- `src/NTG.Adk.Implementations/Sessions/InvocationContext.cs` - Implemented `InvocationId`
+- `src/NTG.Adk.Operators/Runners/Runner.cs` - Added `invocationId` parameter
+- `src/NTG.Adk.Operators/Agents/LlmAgent.cs` - Updated event creation logic
+
+#### Breaking Changes
+
+- **NONE** - Backward compatible. `invocationId` parameter in `Runner` is optional.
+
+
 ## [1.8.8] - 2025-12-18
 
 ### 🐛 **BUG FIX: Tool Results Included in Message History**

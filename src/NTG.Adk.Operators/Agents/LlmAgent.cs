@@ -202,7 +202,8 @@ public class LlmAgent : BaseAgent
                                 {
                                     Author = Name,
                                     Content = Boundary.Events.Content.FromReasoning(part.Reasoning, "model"),
-                                    Partial = true
+                                    Partial = true,
+                                    InvocationId = context.InvocationId
                                 };
                                 yield return CreateEvent(reasoningEvent);
                             }
@@ -220,7 +221,8 @@ public class LlmAgent : BaseAgent
                         {
                             Author = Name,
                             Content = Boundary.Events.Content.FromText(response.Text, "model"),
-                            Partial = true  // Mark as partial streaming chunk
+                            Partial = true,  // Mark as partial streaming chunk
+                            InvocationId = context.InvocationId
                         };
 
                         yield return CreateEvent(streamEvent);
@@ -239,7 +241,7 @@ public class LlmAgent : BaseAgent
                     // Execute tools
                     foreach (var functionCall in functionCalls)
                     {
-                        yield return CreateFunctionCallEvent(functionCall);
+                        yield return CreateFunctionCallEvent(functionCall, context.InvocationId);
 
                         // Execute tool
                         var tool = effectiveTools.FirstOrDefault(t => t.Name == functionCall.Name);
@@ -248,7 +250,7 @@ public class LlmAgent : BaseAgent
                             var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);
 
                             // Create event with actions from tool
-                            var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, toolActions);
+                            var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, context.InvocationId, functionCall.Id, toolActions);
 
                             yield return responseEvent;
 
@@ -300,7 +302,7 @@ public class LlmAgent : BaseAgent
                     // Execute tools
                     foreach (var functionCall in response.FunctionCalls)
                     {
-                        yield return CreateFunctionCallEvent(functionCall);
+                        yield return CreateFunctionCallEvent(functionCall, context.InvocationId);
 
                         // Execute tool
                         var tool = effectiveTools.FirstOrDefault(t => t.Name == functionCall.Name);
@@ -309,7 +311,7 @@ public class LlmAgent : BaseAgent
                             var (toolResult, toolActions) = await ExecuteToolAsync(tool, functionCall, context, cancellationToken);
 
                             // Create event with actions from tool
-                            var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, toolActions);
+                            var responseEvent = CreateFunctionResponseEvent(functionCall.Name, toolResult, context.InvocationId, functionCall.Id, toolActions);
 
                             yield return responseEvent;
 
@@ -351,7 +353,8 @@ public class LlmAgent : BaseAgent
                         Author = Name,
                         Content = response.Content != null
                             ? ConvertToDto(response.Content)
-                            : Boundary.Events.Content.FromText(finalText ?? "", "model")
+                            : Boundary.Events.Content.FromText(finalText ?? "", "model"),
+                        InvocationId = context.InvocationId
                     };
 
                     yield return CreateEvent(evt);
@@ -536,11 +539,12 @@ public class LlmAgent : BaseAgent
         }
     }
 
-    private IEvent CreateFunctionCallEvent(IFunctionCall functionCall)
+    private IEvent CreateFunctionCallEvent(IFunctionCall functionCall, string invocationId)
     {
         var evt = new Event
         {
             Author = Name,
+            InvocationId = invocationId,
             Content = new Boundary.Events.Content
             {
                 Role = "model",
@@ -551,7 +555,8 @@ public class LlmAgent : BaseAgent
                         FunctionCall = new Boundary.Events.FunctionCall
                         {
                             Name = functionCall.Name,
-                            Args = functionCall.Args as Dictionary<string, object>
+                            Args = functionCall.Args as Dictionary<string, object>,
+                            Id = functionCall.Id
                         }
                     }
                 ]
@@ -561,11 +566,12 @@ public class LlmAgent : BaseAgent
         return CreateEvent(evt);
     }
 
-    private IEvent CreateFunctionResponseEvent(string functionName, object result, IToolActions? toolActions = null)
+    private IEvent CreateFunctionResponseEvent(string functionName, object result, string invocationId, string? functionId = null, IToolActions? toolActions = null)
     {
         var evt = new Event
         {
             Author = "tool",
+            InvocationId = invocationId,
             Content = new Boundary.Events.Content
             {
                 Role = "tool",
@@ -576,7 +582,8 @@ public class LlmAgent : BaseAgent
                         FunctionResponse = new Boundary.Events.FunctionResponse
                         {
                             Name = functionName,
-                            Response = result
+                            Response = result,
+                            Id = functionId
                         }
                     }
                 ]

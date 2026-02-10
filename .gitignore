@@ -430,3 +430,7 @@ nupkgs/
 
 # Claude Code settings
 .claude/
+
+# Reference repositories (allow local git clones but track files in main repo)
+docs/ref/**/.git
+docs/ref/**/.git/

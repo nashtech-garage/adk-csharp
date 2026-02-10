@@ -26,6 +26,7 @@ public class InvocationContext : IInvocationContext
     public IMemoryService? MemoryService { get; init; }
     public RunConfig? RunConfig { get; init; }
     public IReadOnlyDictionary<string, object>? Metadata { get; init; }
+    public string InvocationId { get; init; } = Guid.NewGuid().ToString();
 
     public int NumberOfLlmCalls => _numberOfLlmCalls;
 
@@ -54,6 +55,7 @@ public class InvocationContext : IInvocationContext
             MemoryService = MemoryService,
             RunConfig = RunConfig,
             Metadata = Metadata,
+            InvocationId = InvocationId,
             _numberOfLlmCalls = _numberOfLlmCalls
         };
     }
@@ -70,6 +72,7 @@ public class InvocationContext : IInvocationContext
             MemoryService = MemoryService,
             RunConfig = RunConfig,
             Metadata = Metadata,
+            InvocationId = InvocationId,
             _numberOfLlmCalls = _numberOfLlmCalls
         };
     }
@@ -86,6 +89,7 @@ public class InvocationContext : IInvocationContext
             MemoryService = MemoryService,
             RunConfig = RunConfig,
             Metadata = Metadata,
+            InvocationId = InvocationId,
             _numberOfLlmCalls = _numberOfLlmCalls
         };
     }

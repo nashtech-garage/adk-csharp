@@ -61,6 +61,11 @@ public interface IInvocationContext
     int NumberOfLlmCalls { get; }
 
     /// <summary>
+    /// Unique identifier for this invocation
+    /// </summary>
+    string InvocationId { get; }
+
+    /// <summary>
     /// Increment LLM call counter and enforce limit.
     /// Throws LlmCallsLimitExceededError if limit exceeded.
     /// </summary>

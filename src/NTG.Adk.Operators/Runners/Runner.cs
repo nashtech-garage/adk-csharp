@@ -75,6 +75,7 @@ public class Runner
         string? userInput = null,
         IReadOnlyDictionary<string, object>? initialState = null,
         IReadOnlyDictionary<string, object>? metadata = null,
+        string? invocationId = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
@@ -114,7 +115,8 @@ public class Runner
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
-            Metadata = metadata
+            Metadata = metadata,
+            InvocationId = invocationId ?? Guid.NewGuid().ToString()
         };
 
         // Run agent and yield events
@@ -146,13 +148,14 @@ public class Runner
         Boundary.Events.Content userMessage,
         IReadOnlyDictionary<string, object>? initialState = null,
         IReadOnlyDictionary<string, object>? metadata = null,
+        string? invocationId = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
         // Convert Boundary DTO to IContent interface via adapter
         IContent contentAdapter = new ContentAdapter(userMessage);
 
-        await foreach (var evt in RunAsync(userId, sessionId, contentAdapter, initialState, metadata, cancellationToken))
+        await foreach (var evt in RunAsync(userId, sessionId, contentAdapter, initialState, metadata, invocationId, cancellationToken))
         {
             yield return evt;
         }
@@ -175,6 +178,7 @@ public class Runner
         IContent userMessage,
         IReadOnlyDictionary<string, object>? initialState = null,
         IReadOnlyDictionary<string, object>? metadata = null,
+        string? invocationId = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
@@ -214,7 +218,8 @@ public class Runner
             ArtifactService = ArtifactService,
             MemoryService = MemoryService,
             RunConfig = RunConfig,
-            Metadata = metadata
+            Metadata = metadata,
+            InvocationId = invocationId ?? Guid.NewGuid().ToString()
         };
 
         // Run agent and yield events
