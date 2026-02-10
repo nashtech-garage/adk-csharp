@@ -35,6 +35,7 @@ public sealed class PooledInvocationContext : IInvocationContext, IDisposable
     public RunConfig? RunConfig => _context.RunConfig;
     public IReadOnlyDictionary<string, object>? Metadata => _context.Metadata;
     public int NumberOfLlmCalls => _context.NumberOfLlmCalls;
+    public string InvocationId => _context.InvocationId;
 
     public void IncrementAndEnforceLlmCallsLimit() => _context.IncrementAndEnforceLlmCallsLimit();
 

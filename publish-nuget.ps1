@@ -117,24 +117,33 @@ if (-not $allFound) {
 }
 Write-Host ""
 
-# Prompt for API Key
-Write-Host "Please enter your NuGet.org API Key:" -ForegroundColor Yellow
-Write-Host "(Get your API key from https://www.nuget.org/account/apikeys)" -ForegroundColor Gray
-$apiKey = Read-Host -AsSecureString
+# Step 6: Get API Key
+Write-Host "Step 6: Authenticating..." -ForegroundColor Cyan
 
-# Convert SecureString to plain text for dotnet command
-$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($apiKey)
-$apiKeyPlainText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-[System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+$apiKeyPlainText = $env:NTG_ADK_NUGET_API_KEY
 
-if ([string]::IsNullOrWhiteSpace($apiKeyPlainText)) {
-    Write-Host "ERROR: API Key cannot be empty!" -ForegroundColor Red
-    exit 1
+if (-not [string]::IsNullOrWhiteSpace($apiKeyPlainText)) {
+    Write-Host "  ✓ Found API Key in environment variable 'NTG_ADK_NUGET_API_KEY'" -ForegroundColor Green
+} else {
+    # Prompt for API Key
+    Write-Host "Please enter your NuGet.org API Key:" -ForegroundColor Yellow
+    Write-Host "(Get your API key from https://www.nuget.org/account/apikeys)" -ForegroundColor Gray
+    $apiKey = Read-Host -AsSecureString
+
+    # Convert SecureString to plain text for dotnet command
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($apiKey)
+    $apiKeyPlainText = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+
+    if ([string]::IsNullOrWhiteSpace($apiKeyPlainText)) {
+        Write-Host "ERROR: API Key cannot be empty!" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host ""
+    Write-Host "API Key received (length: $($apiKeyPlainText.Length) characters)" -ForegroundColor Green
+    Write-Host ""
 }
-
-Write-Host ""
-Write-Host "API Key received (length: $($apiKeyPlainText.Length) characters)" -ForegroundColor Green
-Write-Host ""
 
 # Confirmation
 Write-Host "WARNING: This will publish 5 packages (NTG.Adk + 4 layers) version $version to NuGet.org" -ForegroundColor Yellow
