@@ -86,6 +86,7 @@ public sealed class A2aAgentExecutor
             runRequest.NewMessage?.Parts.FirstOrDefault()?.Text,
             runRequest.StateDelta,
             metadata: null,
+            invocationId: null,
             cancellationToken))
         {
             // Convert each ADK event to A2A events
