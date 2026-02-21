@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\NTG.Adk.CoreAbstractions\NTG.Adk.CoreAbstractions.csproj" />
@@ -31,7 +31,7 @@
     <!-- NuGet Package Metadata -->
     <IsPackable>true</IsPackable>
     <PackageId>NTG.Adk.Implementations</PackageId>
-    <Version>1.8.9</Version>
+    <Version>1.8.10</Version>
     <Authors>NTG</Authors>
     <Company>NTG</Company>
     <Description>NTG.Adk Implementations - Concrete implementations and adapters (Layer 3 of A.D.D V3 architecture)</Description>

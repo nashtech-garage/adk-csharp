@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,7 +8,7 @@
     <!-- NuGet Package Metadata -->
     <IsPackable>true</IsPackable>
     <PackageId>NTG.Adk.CoreAbstractions</PackageId>
-    <Version>1.8.9</Version>
+    <Version>1.8.10</Version>
     <Authors>NTG</Authors>
     <Company>NTG</Company>
     <Description>NTG.Adk Core Abstractions - Interfaces and ports (Layer 2 of A.D.D V3 architecture)</Description>

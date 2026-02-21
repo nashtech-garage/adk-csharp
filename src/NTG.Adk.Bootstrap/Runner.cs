@@ -17,11 +17,13 @@ public class Runner
 {
     private readonly IAgent _agent;
     private readonly IInvocationContextFactory _contextFactory;
+    private readonly RunConfig _runConfig;
 
-    public Runner(IAgent agent, IInvocationContextFactory? contextFactory = null)
+    public Runner(IAgent agent, IInvocationContextFactory? contextFactory = null, RunConfig? runConfig = null)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _contextFactory = contextFactory ?? new InvocationContextFactory();
+        _runConfig = runConfig ?? new RunConfig { StreamingMode = StreamingMode.Sse };
     }
 
     /// <summary>
@@ -33,14 +35,17 @@ public class Runner
         CancellationToken cancellationToken = default)
     {
         var session = new InMemorySession(sessionId);
-        var context = _contextFactory.Create(session, userInput: userInput);
+        var context = _contextFactory.Create(session, userInput: userInput, runConfig: _runConfig);
 
         var finalText = new System.Text.StringBuilder();
 
         await foreach (var evt in _agent.RunAsync(context, cancellationToken))
         {
             // CRITICAL: Append event to session history so tool execution doesn't infinite loop
-            session.Events.Add(evt);
+            if (!evt.Partial)
+            {
+                session.Events.Add(evt);
+            }
 
             // Collect text from events
             if (evt.Content?.Parts != null)
@@ -68,11 +73,14 @@ public class Runner
         CancellationToken cancellationToken = default)
     {
         var session = new InMemorySession(sessionId);
-        var context = _contextFactory.Create(session, userInput: userInput);
+        var context = _contextFactory.Create(session, userInput: userInput, runConfig: _runConfig);
 
         await foreach (var evt in _agent.RunAsync(context, cancellationToken))
         {
-            session.Events.Add(evt);
+            if (!evt.Partial)
+            {
+                session.Events.Add(evt);
+            }
             yield return evt;
         }
     }
