@@ -39,6 +39,9 @@ public class Runner
 
         await foreach (var evt in _agent.RunAsync(context, cancellationToken))
         {
+            // CRITICAL: Append event to session history so tool execution doesn't infinite loop
+            session.Events.Add(evt);
+
             // Collect text from events
             if (evt.Content?.Parts != null)
             {
@@ -69,6 +72,7 @@ public class Runner
 
         await foreach (var evt in _agent.RunAsync(context, cancellationToken))
         {
+            session.Events.Add(evt);
             yield return evt;
         }
     }
