@@ -1,6 +1,7 @@
 // Copyright 2025 NTG
 // Licensed under the Apache License, Version 2.0
 
+using System.Collections.Concurrent;
 using NTG.Adk.CoreAbstractions.Agents;
 using NTG.Adk.CoreAbstractions.Events;
 using NTG.Adk.CoreAbstractions.Sessions;
@@ -18,6 +19,7 @@ public class Runner
     private readonly IAgent _agent;
     private readonly IInvocationContextFactory _contextFactory;
     private readonly RunConfig _runConfig;
+    private readonly ConcurrentDictionary<string, ISession> _sessions = new();
 
     public Runner(IAgent agent, IInvocationContextFactory? contextFactory = null, RunConfig? runConfig = null)
     {
@@ -34,7 +36,8 @@ public class Runner
         string? sessionId = null,
         CancellationToken cancellationToken = default)
     {
-        var session = new InMemorySession(sessionId);
+        var id = sessionId ?? Guid.NewGuid().ToString();
+        var session = _sessions.GetOrAdd(id, _ => new InMemorySession(id));
         var context = _contextFactory.Create(session, userInput: userInput, runConfig: _runConfig);
 
         var finalText = new System.Text.StringBuilder();
@@ -72,7 +75,8 @@ public class Runner
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
-        var session = new InMemorySession(sessionId);
+        var id = sessionId ?? Guid.NewGuid().ToString();
+        var session = _sessions.GetOrAdd(id, _ => new InMemorySession(id));
         var context = _contextFactory.Create(session, userInput: userInput, runConfig: _runConfig);
 
         await foreach (var evt in _agent.RunAsync(context, cancellationToken))

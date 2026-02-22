@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.11] - 2026-02-22
+
+### 🐛 **BUG FIX: Persistent Session Context in Default Runner**
+
+Fix a bug where session context and memory were lost between agentic interactions when using the Bootstrap `Runner`.
+
+#### Bug Fix
+
+- **Runner.cs (Bootstrap)**
+  - Implemented `ConcurrentDictionary` to cache and reuse `InMemorySession` instances by `sessionId`.
+  - Ensures correct conversational memory retention and agentic orchestration continuity across multiple iterative requests without explicitly injecting states from outside.
+
 ## [1.8.10] - 2026-02-21
 
 ### 🐛 **BUG FIX: Infinite Request Loops**
