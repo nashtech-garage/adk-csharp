@@ -104,6 +104,11 @@ public interface IGenerationConfig
     int? TopK { get; }
     int? MaxOutputTokens { get; }
     List<string>? StopSequences { get; }
+    
+    /// <summary>
+    /// Reasoning effort level (low, medium, high) for models like OpenAI o1/o3
+    /// </summary>
+    string? ReasoningEffort { get; }
 }
 
 /// <summary>

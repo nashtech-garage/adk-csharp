@@ -60,6 +60,11 @@ public class LlmAgent : BaseAgent
     public IReadOnlyList<IRequestProcessor>? RequestProcessors { get; init; }
 
     /// <summary>
+    /// Generation config (temperature, reasoning effort, etc.)
+    /// </summary>
+    public IGenerationConfig? GenerationConfig { get; init; }
+
+    /// <summary>
     /// Model name/identifier
     /// </summary>
     public string Model { get; init; }
@@ -140,7 +145,8 @@ public class LlmAgent : BaseAgent
             SystemInstruction = processedInstruction,
             Contents = contents,
             Tools = toolDeclarations,
-            ToolChoice = toolDeclarations != null && toolDeclarations.Count > 0 ? "auto" : null
+            ToolChoice = toolDeclarations != null && toolDeclarations.Count > 0 ? "auto" : null,
+            Config = GenerationConfig
         };
 
         // Apply request processors if configured
@@ -390,9 +396,8 @@ public class LlmAgent : BaseAgent
             if (isOptional)
                 return "";
 
-            throw new InvalidOperationException(
-                $"State variable '{varName}' not found in instruction template. " +
-                $"Use {{var?}} for optional variables.");
+            // Not a template var - likely a code example in skill/agent docs, leave as-is
+            return match.Value;
         });
 
         // Note: {artifact.var} syntax for artifact references not yet implemented
@@ -632,4 +637,17 @@ public class LlmAgent : BaseAgent
             Parts = parts
         };
     }
+}
+
+/// <summary>
+/// Simple generation config for LlmAgent
+/// </summary>
+public record GenerationConfig : IGenerationConfig
+{
+    public double? Temperature { get; init; }
+    public double? TopP { get; init; }
+    public int? TopK { get; init; }
+    public int? MaxOutputTokens { get; init; }
+    public List<string>? StopSequences { get; init; }
+    public string? ReasoningEffort { get; init; }
 }

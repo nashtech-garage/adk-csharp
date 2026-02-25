@@ -509,6 +509,7 @@ internal class SimpleGenerationConfig : IGenerationConfig
     public int? TopK => null;
     public int? MaxOutputTokens { get; init; }
     public List<string>? StopSequences => null;
+    public string? ReasoningEffort => null;
 }
 
 // Adapter classes

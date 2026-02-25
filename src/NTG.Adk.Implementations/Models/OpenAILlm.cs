@@ -171,6 +171,17 @@ public class OpenAILlm : ILlm
                     options.StopSequences.Add(seq);
                 }
             }
+            
+            if (!string.IsNullOrEmpty(request.Config.ReasoningEffort))
+            {
+                options.ReasoningEffortLevel = request.Config.ReasoningEffort.ToLowerInvariant() switch
+                {
+                    "low" => ChatReasoningEffortLevel.Low,
+                    "medium" => ChatReasoningEffortLevel.Medium,
+                    "high" => ChatReasoningEffortLevel.High,
+                    _ => ChatReasoningEffortLevel.Medium
+                };
+            }
         }
 
         return options;
