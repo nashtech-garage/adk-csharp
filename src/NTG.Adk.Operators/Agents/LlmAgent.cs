@@ -291,6 +291,19 @@ public class LlmAgent : BaseAgent
                         context.Session.State.Set(OutputKey, finalTextStr);
                     }
 
+                    // Yield consolidated final event (non-partial) so session history has the complete response
+                    if (!string.IsNullOrEmpty(finalTextStr))
+                    {
+                        var finalEvent = new Event
+                        {
+                            Author = Name,
+                            Content = Boundary.Events.Content.FromText(finalTextStr, "model"),
+                            Partial = false,
+                            InvocationId = context.InvocationId
+                        };
+                        yield return CreateEvent(finalEvent);
+                    }
+
                     // Stop processing
                     continueProcessing = false;
                 }
