@@ -415,6 +415,10 @@ public class LlmAgent : BaseAgent
         // Python ADK approach: include_contents='default'
         foreach (var evt in context.Session.Events)
         {
+            // Skip streaming intermediate chunks
+            if (evt.Partial)
+                continue;
+
             // Skip events without content
             if (evt.Content == null || evt.Content.Parts == null || evt.Content.Parts.Count == 0)
                 continue;
@@ -481,10 +485,9 @@ public class LlmAgent : BaseAgent
         // Add all events from session (includes assistant responses and tool results)
         foreach (var evt in context.Session.Events)
         {
-            if (evt.Content != null)
-            {
-                contents.Add(evt.Content);
-            }
+            if (evt.Partial || evt.Content == null)
+                continue;
+            contents.Add(evt.Content);
         }
 
         return contents;
