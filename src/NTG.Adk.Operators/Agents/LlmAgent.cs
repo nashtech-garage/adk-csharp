@@ -190,10 +190,11 @@ public class LlmAgent : BaseAgent
                         // Collect function calls
                         foreach (var fc in response.FunctionCalls)
                         {
+                            // Skip arg-only streaming deltas (null ID + empty name)
+                            if (fc.Id == null && string.IsNullOrEmpty(fc.Name))
+                                continue;
                             if (!functionCalls.Any(existing => existing.Id == fc.Id))
-                            {
                                 functionCalls.Add(fc);
-                            }
                         }
                     }
 
