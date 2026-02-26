@@ -4,6 +4,7 @@
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
+using System.Text;
 using NTG.Adk.CoreAbstractions.Events;
 using NTG.Adk.CoreAbstractions.Models;
 using NTG.Adk.Implementations.Events;
@@ -82,18 +83,78 @@ public class OpenAILlm : ILlm
         [System.Runtime.CompilerServices.EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
-        // Build OpenAI messages
         var messages = BuildMessages(request);
-
-        // Build options
         var options = BuildChatCompletionOptions(request);
-
-        // Call OpenAI streaming API
         var updates = _client.CompleteChatStreamingAsync(messages, options, cancellationToken);
+
+        // Accumulate tool call deltas by index; yield text immediately
+        var toolCallMap = new SortedDictionary<int, (string Id, string Name, StringBuilder Args)>();
 
         await foreach (var update in updates.WithCancellation(cancellationToken))
         {
-            yield return ConvertStreamingUpdate(update);
+            // Accumulate tool call deltas (don't yield intermediate chunks)
+            foreach (var tc in update.ToolCallUpdates)
+            {
+                if (!toolCallMap.TryGetValue(tc.Index, out var state))
+                {
+                    state = (tc.ToolCallId ?? "", tc.FunctionName ?? "", new StringBuilder());
+                    toolCallMap[tc.Index] = state;
+                }
+                else if (!string.IsNullOrEmpty(tc.ToolCallId) || !string.IsNullOrEmpty(tc.FunctionName))
+                {
+                    toolCallMap[tc.Index] = (
+                        !string.IsNullOrEmpty(tc.ToolCallId) ? tc.ToolCallId : state.Id,
+                        !string.IsNullOrEmpty(tc.FunctionName) ? tc.FunctionName : state.Name,
+                        state.Args
+                    );
+                    state = toolCallMap[tc.Index];
+                }
+                var argsUpdate = tc.FunctionArgumentsUpdate?.ToString();
+                if (!string.IsNullOrEmpty(argsUpdate))
+                    state.Args.Append(argsUpdate);
+            }
+
+            // Yield text/reasoning chunks immediately
+            var contentParts = new List<IPart>();
+            var textParts = new List<string>();
+            foreach (var c in update.ContentUpdate)
+            {
+                var reasoning = GetReasoningContent(c);
+                if (!string.IsNullOrEmpty(reasoning))
+                    contentParts.Add(new SimplePart { Reasoning = reasoning });
+                if (!string.IsNullOrEmpty(c.Text))
+                {
+                    textParts.Add(c.Text);
+                    contentParts.Add(new SimplePart { Text = c.Text });
+                }
+            }
+            if (contentParts.Count > 0)
+            {
+                yield return new OpenAILlmResponse
+                {
+                    Content = new SimpleContent { Role = "model", Parts = contentParts },
+                    Text = string.Join("", textParts),
+                    FunctionCalls = null,
+                    FinishReason = update.FinishReason?.ToString(),
+                    Usage = null
+                };
+            }
+        }
+
+        // Yield assembled complete tool calls after streaming ends
+        if (toolCallMap.Count > 0)
+        {
+            var calls = toolCallMap.Values
+                .Select(s => (IFunctionCall)new AssembledFunctionCall(s.Id, s.Name, s.Args.ToString()))
+                .ToList();
+            yield return new OpenAILlmResponse
+            {
+                Content = null,
+                Text = null,
+                FunctionCalls = calls,
+                FinishReason = "tool_calls",
+                Usage = null
+            };
         }
     }
 
@@ -229,7 +290,9 @@ public class OpenAILlm : ILlm
             if (part.FunctionCall != null)
             {
                 // OpenAI function calls
-                var functionCallJson = System.Text.Json.JsonSerializer.Serialize(part.FunctionCall.Args);
+                var functionCallJson = part.FunctionCall.Args != null
+                    ? System.Text.Json.JsonSerializer.Serialize(part.FunctionCall.Args)
+                    : "{}";
                 toolCalls.Add(ChatToolCall.CreateFunctionToolCall(
                     id: part.FunctionCall.Id ?? $"call_{Guid.NewGuid():N}",
                     functionName: part.FunctionCall.Name,
@@ -348,29 +411,6 @@ public class OpenAILlm : ILlm
         };
     }
 
-    private ILlmResponse ConvertStreamingUpdate(StreamingChatCompletionUpdate update)
-    {
-        // Extract text
-        var text = string.Join("", update.ContentUpdate.Select(c => c.Text ?? string.Empty));
-
-        // Extract tool calls
-        var functionCalls = update.ToolCallUpdates
-            .Select(tc => new OpenAIFunctionCall(tc))
-            .ToList<IFunctionCall>();
-
-        // Convert to IContent
-        var content = ConvertUpdateToIContent(update);
-
-        return new OpenAILlmResponse
-        {
-            Content = content,
-            Text = !string.IsNullOrEmpty(text) ? text : null,
-            FunctionCalls = functionCalls.Count > 0 ? functionCalls : null,
-            FinishReason = update.FinishReason?.ToString(),
-            Usage = null // Streaming doesn't provide usage in each chunk
-        };
-    }
-
     private IContent ConvertToIContent(ChatCompletion completion)
     {
         var parts = new List<IPart>();
@@ -400,43 +440,6 @@ public class OpenAILlm : ILlm
         };
     }
 
-    private IContent ConvertUpdateToIContent(StreamingChatCompletionUpdate update)
-    {
-        var parts = new List<IPart>();
-
-        // Add text and reasoning parts
-        foreach (var content in update.ContentUpdate)
-        {
-            // Check for reasoning content (DeepSeek R1, OpenAI o1/o3)
-            // OpenAI SDK exposes reasoning via the Kind property or dedicated fields
-            var reasoning = GetReasoningContent(content);
-            if (!string.IsNullOrEmpty(reasoning))
-            {
-                parts.Add(new SimplePart { Reasoning = reasoning });
-            }
-            
-            if (!string.IsNullOrEmpty(content.Text))
-            {
-                parts.Add(new SimplePart { Text = content.Text });
-            }
-        }
-
-        // Add tool call updates
-        foreach (var toolCall in update.ToolCallUpdates)
-        {
-            parts.Add(new SimplePart
-            {
-                FunctionCall = new OpenAIFunctionCall(toolCall)
-            });
-        }
-
-        return new SimpleContent
-        {
-            Role = "model",
-            Parts = parts
-        };
-    }
-    
     /// <summary>
     /// Extract reasoning content from ChatMessageContentPart.
     /// OpenAI reasoning models (o1, o3) and compatible APIs (DeepSeek R1) 
@@ -534,7 +537,7 @@ internal class OpenAIFunctionCall : IFunctionCall
 
                 foreach (var property in jsonDoc.RootElement.EnumerateObject())
                 {
-                    dict[property.Name] = ConvertJsonElement(property.Value);
+                    dict[property.Name] = ConvertElement(property.Value);
                 }
 
                 return dict;
@@ -546,7 +549,7 @@ internal class OpenAIFunctionCall : IFunctionCall
         }
     }
 
-    private static object ConvertJsonElement(System.Text.Json.JsonElement element)
+    internal static object ConvertElement(System.Text.Json.JsonElement element)
     {
         return element.ValueKind switch
         {
@@ -555,13 +558,48 @@ internal class OpenAIFunctionCall : IFunctionCall
             System.Text.Json.JsonValueKind.True => true,
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null!,
-            System.Text.Json.JsonValueKind.Array => element.EnumerateArray().Select(ConvertJsonElement).ToList(),
-            System.Text.Json.JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => ConvertJsonElement(p.Value)),
+            System.Text.Json.JsonValueKind.Array => element.EnumerateArray().Select(ConvertElement).ToList(),
+            System.Text.Json.JsonValueKind.Object => element.EnumerateObject().ToDictionary(p => p.Name, p => ConvertElement(p.Value)),
             _ => element.GetRawText()
         };
     }
 
     public string? Id => _toolCall?.Id ?? _toolCallUpdate?.ToolCallId;
+}
+
+/// <summary>
+/// Complete assembled function call from streaming deltas
+/// </summary>
+internal class AssembledFunctionCall : IFunctionCall
+{
+    private readonly string _argsJson;
+
+    public AssembledFunctionCall(string id, string name, string argsJson)
+    {
+        Id = id;
+        Name = name;
+        _argsJson = argsJson;
+    }
+
+    public string Name { get; }
+    public string? Id { get; }
+
+    public IReadOnlyDictionary<string, object>? Args
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(_argsJson)) return null;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(_argsJson);
+                var dict = new Dictionary<string, object>();
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                    dict[prop.Name] = OpenAIFunctionCall.ConvertElement(prop.Value);
+                return dict;
+            }
+            catch { return null; }
+        }
+    }
 }
 
 internal class OpenAIUsageMetadata : IUsageMetadata
