@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.12] - 2026-03-01
+
+### 🐛 **BUG FIX: Tool Call Accumulation & Event Processing**
+
+Fix critical defects in tool call argument streaming and event part handling.
+
+#### Bug Fixes
+
+- **OpenAILlm.cs (Implementations)**
+  - Fixed streaming tool call argument accumulation by tracking part indices.
+  - Prevents argument corruption or loss during high-concurrency streaming sessions.
+
+- **LlmAgent.cs (Operators)**
+  - Added null-check guard when processing content parts.
+  - Skips empty/null parts that could trigger downstream NullReferenceExceptions in complex orchestration.
+
+- **Runner.cs (Bootstrap)**
+  - Improved event persistence logic to handle parallel streaming branches more robustly.
+
+---
+
 ## [1.8.11] - 2026-02-22
 
 ### 🐛 **BUG FIX: Persistent Session Context in Default Runner**
