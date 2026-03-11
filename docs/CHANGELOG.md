@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.14] - 2026-03-11
+
+### 🐛 **BUG FIX: Multimodal Image Handling in OpenAILlm**
+
+Fix two defects in inline image processing for OpenAI API calls.
+
+#### Bug Fixes
+
+- **OpenAILlm.cs (Implementations)**
+  - Fixed message filter to retain content parts containing only inline images (`InlineData`). Previously, image-only parts were incorrectly skipped due to missing `InlineData` null-check.
+  - Fixed image encoding: switched from base64 data URI (`new Uri(...)`) to `BinaryData.FromBytes()` overload. `Uri` constructor normalizes/corrupts base64 strings, causing API rejection.
+
+---
+
 ## [1.8.12] - 2026-03-01
 
 ### 🐛 **BUG FIX: Tool Call Accumulation & Event Processing**

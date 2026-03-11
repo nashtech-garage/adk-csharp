@@ -25,7 +25,7 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 
 ## 📊 Status
 
-**Version**: 1.8.12
+**Version**: 1.8.14
 **Target Framework**: .NET 8.0 LTS (supported until Nov 2026)
 **Production Readiness**: 100% ✅
 **Core Feature Parity with Python ADK**: 99% ✅ (Retrieval/RAG: 50%)

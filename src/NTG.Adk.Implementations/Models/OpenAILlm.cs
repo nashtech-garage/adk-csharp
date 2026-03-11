@@ -175,11 +175,12 @@ public class OpenAILlm : ILlm
             if (content.Parts == null || content.Parts.Count == 0)
                 continue;
 
-            // Skip content with only empty text parts (no function calls/responses)
+            // Skip content with only empty text parts (no function calls/responses/images)
             if (content.Parts.All(p =>
                 string.IsNullOrWhiteSpace(p.Text) &&
                 p.FunctionCall == null &&
-                p.FunctionResponse == null))
+                p.FunctionResponse == null &&
+                p.InlineData == null))
                 continue;
 
             messages.Add(ConvertContent(content));
@@ -277,13 +278,11 @@ public class OpenAILlm : ILlm
 
             if (part.InlineData != null && part.MimeType != null)
             {
-                // Image/binary data - convert to base64 data URI
+                // Use BinaryData overload — Uri ctor normalizes data: URIs and corrupts base64
                 hasMultimodalContent = true;
-                var base64Data = Convert.ToBase64String(part.InlineData);
-                var dataUri = $"data:{part.MimeType};base64,{base64Data}";
-
                 multimodalParts.Add(ChatMessageContentPart.CreateImagePart(
-                    imageUri: new Uri(dataUri)
+                    imageBytes: BinaryData.FromBytes(part.InlineData),
+                    imageBytesMediaType: part.MimeType
                 ));
             }
 
