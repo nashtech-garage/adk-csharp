@@ -4,7 +4,7 @@ This document outlines the standard procedure for publishing a new version of th
 
 ## Prerequisites
 
-- You must have the .NET 8 SDK or newer installed (`dotnet --version`).
+- You must have the .NET 10 SDK or newer installed (`dotnet --version`).
 - You must have an active NuGet API Key.
   - The script will prompt for it if not found in the environment.
   - **Optional but recommended**: Set your API key as an environment variable to bypass the prompt:

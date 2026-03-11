@@ -10,7 +10,7 @@ with 99% feature parity with Python ADK. Built using A.D.D V3 (Abstract Driven
 Development) architecture with strict five-layer separation.
 
 Version: 1.8.14
-Target: .NET 8.0 LTS (supported until Nov 2026)
+Target: .NET 10.0
 License: Apache 2.0
 Repository: https://github.com/ntg/adk-csharp
 
@@ -1855,7 +1855,7 @@ VERSION INFORMATION
 ================================================================================
 
 NTG.Adk Version: 1.8.14
-.NET Target: 8.0 LTS (until Nov 2026)
+.NET Target: 10.0
 Python ADK Parity: 99%
 Production Ready: Yes
 Last Updated: 2026-03-01

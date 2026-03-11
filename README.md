@@ -26,7 +26,7 @@ NTG.Adk is a complete C# port of [Google ADK Python](https://github.com/google/a
 ## 📊 Status
 
 **Version**: 1.8.14
-**Target Framework**: .NET 8.0 LTS (supported until Nov 2026)
+**Target Framework**: .NET 10.0
 **Production Readiness**: 100% ✅
 **Core Feature Parity with Python ADK**: 99% ✅ (Retrieval/RAG: 50%)
 **A2A Interoperability**: 100% ✅
@@ -405,7 +405,7 @@ dotnet run
 
 ## 🔧 Requirements
 
-- **.NET 8.0 LTS** (supported until November 2026)
+- **.NET 10.0**
 - **C# 12** language features
 - **Visual Studio 2022** or **VS Code** with C# Dev Kit
 
@@ -440,7 +440,7 @@ dotnet run
 - ✅ OpenAPI Toolset (REST API auto-integration)
 - ✅ Built-in Tools (Google Search, Code Execution)
 - ✅ LLM Adapters (Gemini, OpenAI)
-- ✅ .NET 8.0 LTS Migration
+- ✅ .NET 10.0 Migration
 
 ### Phase 2 - Persistent Storage (In Progress)
 - ⏳ **DatabaseSessionService** - SQL persistence for sessions
