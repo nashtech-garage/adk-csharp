@@ -89,6 +89,8 @@ public class OpenAILlm : ILlm
 
         // Accumulate tool call deltas by index; yield text immediately
         var toolCallMap = new SortedDictionary<int, (string Id, string Name, StringBuilder Args)>();
+        // State machine for parsing <think>...</think> blocks across stream chunks
+        var thinkState = new ThinkParseState();
 
         await foreach (var update in updates.WithCancellation(cancellationToken))
         {
@@ -119,14 +121,13 @@ public class OpenAILlm : ILlm
             var textParts = new List<string>();
             foreach (var c in update.ContentUpdate)
             {
+                // Native reasoning (o1/o3): pass through directly
                 var reasoning = GetReasoningContent(c);
                 if (!string.IsNullOrEmpty(reasoning))
                     contentParts.Add(new SimplePart { Reasoning = reasoning });
+                // Text content: route <think> blocks to Reasoning, rest to Text
                 if (!string.IsNullOrEmpty(c.Text))
-                {
-                    textParts.Add(c.Text);
-                    contentParts.Add(new SimplePart { Text = c.Text });
-                }
+                    ProcessTextChunk(c.Text, thinkState, contentParts, textParts);
             }
             if (contentParts.Count > 0)
             {
@@ -139,6 +140,19 @@ public class OpenAILlm : ILlm
                     Usage = null
                 };
             }
+        }
+
+        // Flush unclosed <think> block (truncated stream)
+        if (thinkState.InBlock && thinkState.Buffer.Length > 0)
+        {
+            yield return new OpenAILlmResponse
+            {
+                Content = new SimpleContent { Role = "model", Parts = [new SimplePart { Reasoning = thinkState.Buffer.ToString() }] },
+                Text = null,
+                FunctionCalls = null,
+                FinishReason = null,
+                Usage = null
+            };
         }
 
         // Yield assembled complete tool calls after streaming ends
@@ -480,6 +494,68 @@ public class OpenAILlm : ILlm
         }
         
         return null;
+    }
+
+    /// <summary>
+    /// Tracks <think>...</think> parse state across streaming chunks.
+    /// </summary>
+    private sealed class ThinkParseState
+    {
+        public bool InBlock { get; set; }
+        public StringBuilder Buffer { get; } = new();
+    }
+
+    /// <summary>
+    /// Routes text chunk content: <think> blocks → Reasoning parts, rest → Text parts.
+    /// Handles blocks split across multiple stream chunks.
+    /// </summary>
+    private static void ProcessTextChunk(
+        string chunk,
+        ThinkParseState state,
+        List<IPart> contentParts,
+        List<string> textParts)
+    {
+        const string openTag  = "<think>";
+        const string closeTag = "</think>";
+        var pos = 0;
+        while (pos < chunk.Length)
+        {
+            if (!state.InBlock)
+            {
+                var open = chunk.IndexOf(openTag, pos, StringComparison.OrdinalIgnoreCase);
+                if (open < 0)
+                {
+                    var text = chunk[pos..];
+                    textParts.Add(text);
+                    contentParts.Add(new SimplePart { Text = text });
+                    break;
+                }
+                if (open > pos)
+                {
+                    var text = chunk[pos..open];
+                    textParts.Add(text);
+                    contentParts.Add(new SimplePart { Text = text });
+                }
+                state.InBlock = true;
+                pos = open + openTag.Length;
+            }
+            else
+            {
+                var close = chunk.IndexOf(closeTag, pos, StringComparison.OrdinalIgnoreCase);
+                if (close < 0)
+                {
+                    state.Buffer.Append(chunk[pos..]);
+                    break;
+                }
+                state.Buffer.Append(chunk[pos..close]);
+                var thinking = state.Buffer.ToString();
+                if (thinking.Length > 0)
+                    contentParts.Add(new SimplePart { Reasoning = thinking });
+                state.Buffer.Clear();
+                state.InBlock = false;
+                pos = close + closeTag.Length;
+            }
+        }
     }
 
     private IUsageMetadata? ConvertUsage(ChatTokenUsage? usage)

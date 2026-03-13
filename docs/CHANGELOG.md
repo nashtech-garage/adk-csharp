@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.15] - 2026-03-14
+
+### ✨ **FEATURE: Streaming `<think>` Block Parsing**
+
+For OpenAI-compatible models that embed reasoning in `<think>...</think>` blocks within text, the streaming pipeline now automatically routes thinking content into `part.Reasoning` and delivers clean answer text in `part.Text` — no manual parsing required in application code.
+
+#### Changes
+
+- **OpenAILlm.cs (Implementations)**
+  - Added `ThinkParseState` to track parse state across streaming chunks.
+  - Added `ProcessTextChunk`: routes text outside `<think>` tags to `SimplePart { Text }`, content inside to `SimplePart { Reasoning }`.
+  - Correctly handles blocks split across multiple stream chunks.
+  - Unclosed block at stream end is flushed as a Reasoning part.
+  - Native reasoning (o1/o3 via `GetReasoningContent`) is unaffected.
+
+---
+
 ## [1.8.14] - 2026-03-11
 
 ### 🐛 **BUG FIX: Multimodal Image Handling in OpenAILlm**
