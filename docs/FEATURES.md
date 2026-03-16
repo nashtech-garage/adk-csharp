@@ -426,5 +426,5 @@ var pipeline = new SequentialAgent(
 ---
 
 **Last Updated**: 2026-03-14
-**Version**: 1.8.15
+**Version**: 1.8.16
 **Python ADK Compatibility**: 99% core feature parity (100% production-critical features)

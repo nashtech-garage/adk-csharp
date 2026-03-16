@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.16] - 2026-03-16
+
+### 🐛 **BUG FIX: Compaction event ignored by BuildContents**
+
+`LlmEventSummarizer` stores the summary in `Actions.Compaction.CompactedContent` but `BuildContents` only reads `evt.Content`, so compaction events were silently skipped — ADK session grew unbounded and eventually hit context overflow.
+
+#### Changes
+
+- **LlmAgent.cs (Operators)**
+  - `BuildContents`: when a compaction event is encountered (`Actions.Compaction != null`), clear accumulated contents and seed from `CompactedContent`.
+  - Events after the compaction point continue appending normally.
+
+---
+
 ## [1.8.15] - 2026-03-14
 
 ### ✨ **FEATURE: Streaming `<think>` Block Parsing**
