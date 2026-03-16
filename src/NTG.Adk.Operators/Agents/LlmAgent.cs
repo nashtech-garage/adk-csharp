@@ -432,6 +432,16 @@ public class LlmAgent : BaseAgent
             if (evt.Partial)
                 continue;
 
+            // Compaction event: reset contents and start fresh from the summary
+            if (evt.Actions?.Compaction != null)
+            {
+                contents.Clear();
+                var compacted = evt.Actions.Compaction.CompactedContent;
+                if (compacted != null)
+                    contents.Add(compacted);
+                continue;
+            }
+
             // Skip events without content
             if (evt.Content == null || evt.Content.Parts == null || evt.Content.Parts.Count == 0)
                 continue;
