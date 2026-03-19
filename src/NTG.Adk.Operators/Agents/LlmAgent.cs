@@ -178,69 +178,81 @@ public class LlmAgent : BaseAgent
                 var functionCalls = new List<IFunctionCall>();
                 IContent? assistantContent = null;
 
-                await foreach (var response in _llm.GenerateStreamAsync(request, cancellationToken))
+                // Manually iterate so we can catch provider-side socket abort without
+                // losing accumulated text (yield return can't be inside try/catch in C#)
+                var llmEnum = _llm.GenerateStreamAsync(request, cancellationToken)
+                    .GetAsyncEnumerator(cancellationToken);
+                try
                 {
-                    // 6. Process streaming response
-
-                    // Check if response has function calls (tools)
-                    if (response.FunctionCalls?.Count > 0)
+                    while (true)
                     {
-                        hasFunctionCalls = true;
+                        bool hasNext;
+                        try { hasNext = await llmEnum.MoveNextAsync(); }
+                        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                        { break; } // provider closed stream early (ReadTimeoutStream) — treat as normal
+                        if (!hasNext) break;
 
-                        // Collect function calls
-                        foreach (var fc in response.FunctionCalls)
-                        {
-                            // Skip arg-only streaming deltas (null ID + empty name)
-                            if (fc.Id == null && string.IsNullOrEmpty(fc.Name))
-                                continue;
-                            if (!functionCalls.Any(existing => existing.Id == fc.Id))
-                                functionCalls.Add(fc);
-                        }
-                    }
+                        var response = llmEnum.Current;
 
-                    // Check for reasoning content in Parts (interleaved thinking)
-                    if (response.Content?.Parts != null)
-                    {
-                        foreach (var part in response.Content.Parts)
+                        // Check if response has function calls (tools)
+                        if (response.FunctionCalls?.Count > 0)
                         {
-                            if (!string.IsNullOrEmpty(part.Reasoning))
+                            hasFunctionCalls = true;
+
+                            // Collect function calls
+                            foreach (var fc in response.FunctionCalls)
                             {
-                                var reasoningEvent = new Event
-                                {
-                                    Author = Name,
-                                    Content = Boundary.Events.Content.FromReasoning(part.Reasoning, "model"),
-                                    Partial = true,
-                                    InvocationId = context.InvocationId
-                                };
-                                yield return CreateEvent(reasoningEvent);
+                                // Skip arg-only streaming deltas (null ID + empty name)
+                                if (fc.Id == null && string.IsNullOrEmpty(fc.Name))
+                                    continue;
+                                if (!functionCalls.Any(existing => existing.Id == fc.Id))
+                                    functionCalls.Add(fc);
                             }
                         }
-                    }
 
-                    // Check for text content
-                    if (!string.IsNullOrEmpty(response.Text))
-                    {
-                        // Stream text chunks in real-time
-                        finalText.Append(response.Text);
-
-                        // Yield streaming event immediately with Partial=true
-                        var streamEvent = new Event
+                        // Check for reasoning content in Parts (interleaved thinking)
+                        if (response.Content?.Parts != null)
                         {
-                            Author = Name,
-                            Content = Boundary.Events.Content.FromText(response.Text, "model"),
-                            Partial = true,  // Mark as partial streaming chunk
-                            InvocationId = context.InvocationId
-                        };
+                            foreach (var part in response.Content.Parts)
+                            {
+                                if (!string.IsNullOrEmpty(part.Reasoning))
+                                {
+                                    var reasoningEvent = new Event
+                                    {
+                                        Author = Name,
+                                        Content = Boundary.Events.Content.FromReasoning(part.Reasoning, "model"),
+                                        Partial = true,
+                                        InvocationId = context.InvocationId
+                                    };
+                                    yield return CreateEvent(reasoningEvent);
+                                }
+                            }
+                        }
 
-                        yield return CreateEvent(streamEvent);
-                    }
+                        // Check for text content
+                        if (!string.IsNullOrEmpty(response.Text))
+                        {
+                            finalText.Append(response.Text);
 
-                    // Capture assistant content for history
-                    if (response.Content != null)
-                    {
-                        assistantContent = response.Content;
+                            var streamEvent = new Event
+                            {
+                                Author = Name,
+                                Content = Boundary.Events.Content.FromText(response.Text, "model"),
+                                Partial = true,
+                                InvocationId = context.InvocationId
+                            };
+
+                            yield return CreateEvent(streamEvent);
+                        }
+
+                        // Capture assistant content for history
+                        if (response.Content != null)
+                        {
+                            assistantContent = response.Content;
+                        }
                     }
                 }
+                finally { await llmEnum.DisposeAsync(); }
 
                 // 7. Process function calls after streaming completes
                 if (hasFunctionCalls)
