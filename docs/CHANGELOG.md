@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.17] - 2026-03-19
+
+### 🐛 **BUG FIX: SSE Stream Silently Aborted by Provider Socket Timeout**
+
+In SSE streaming mode, some LLM backends (including OpenAI-compatible endpoints) close the TCP connection after sending the last token without sending the `[DONE]` signal. The `ReadTimeoutStream` inside the OpenAI SDK would then throw `OperationCanceledException` (wrapping `SocketException 995`) while waiting for more data. This exception propagated through `LlmAgent.RunAsyncImpl`, aborting execution before the final `Partial=false` consolidation event could be yielded — so neither `partial=false` nor the operator-level `done` event ever reached the client.
+
+#### Changes
+
+- **LlmAgent.cs (Operators)**
+  - Replaced `await foreach` over `GenerateStreamAsync` with a manual `IAsyncEnumerator` loop.
+  - `MoveNextAsync()` is called inside an inner `try/catch` that catches `OperationCanceledException when (!cancellationToken.IsCancellationRequested)` — distinguishing a provider-side socket abort from a genuine user cancellation.
+  - On provider abort: `break` out of the loop; accumulated `finalText` is intact, execution continues normally to emit `Partial=false` and signal completion.
+  - On user cancellation (`cancellationToken.IsCancellationRequested`): exception re-throws as before.
+  - `IAsyncEnumerator.DisposeAsync()` is always called in a `finally` block.
+
+#### Breaking Changes
+
+- **NONE** — 100% backward compatible. Behavior is identical for providers that send `[DONE]`; only providers that close the socket early are affected.
+
+---
+
 ## [1.8.16] - 2026-03-16
 
 ### 🐛 **BUG FIX: Compaction event ignored by BuildContents**
